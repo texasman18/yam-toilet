@@ -1,0 +1,16 @@
+{
+  "name": "급할때 찾는 앱",
+  "short_name": "급할때 찾는 앱",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#00b896",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}
