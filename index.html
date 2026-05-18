@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=f59ba786d95984d04a6269d4e1e86bf3&libraries=services,clusterer"></script>
+  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=f59ba786d95984d04a6269d4e1e86bf3&libraries=services,clusterer&autoload=false"></script>
   <style>
     :root{--bg:#f0f4f8;--white:#ffffff;--surface:#f7f9fc;--surface2:#eef2f7;--border:#dde3ed;--border2:#c8d0de;--teal:#00b896;--teal2:#009d80;--teal-light:#e6faf5;--blue:#2563eb;--blue-light:#eff6ff;--gold:#d97706;--gold-light:#fffbeb;--red:#dc2626;--red-light:#fef2f2;--green:#059669;--green-light:#ecfdf5;--yellow:#d97706;--yellow-light:#fefce8;--text:#0f172a;--text2:#334155;--muted:#64748b;--muted2:#94a3b8;--star:#f59e0b;}
     *{box-sizing:border-box;margin:0;padding:0;}
@@ -54,6 +54,33 @@
     .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:4px;font-weight:500;}.legend-item:last-child{margin-bottom:0;}
     .dot{width:10px;height:10px;border-radius:50%;}.dot.blue{background:var(--blue);}.dot.green{background:var(--green);}.dot.yellow{background:var(--yellow);}.dot.red{background:var(--red);}
     .loading-overlay{display:none!important;}
+
+    /* ===== 현재위치에서 검색 버튼 ===== */
+    #search-here-btn{
+      position:absolute;
+      top:76px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:200;
+      background:var(--white);
+      color:var(--text);
+      border:1.5px solid var(--border2);
+      padding:10px 20px;
+      border-radius:24px;
+      font-size:14px;
+      font-weight:700;
+      box-shadow:0 4px 16px rgba(0,0,0,0.13);
+      cursor:pointer;
+      display:none;
+      align-items:center;
+      gap:8px;
+      white-space:nowrap;
+      transition:background 0.15s, box-shadow 0.15s;
+      font-family:'Noto Sans KR',sans-serif;
+    }
+    #search-here-btn:active{background:var(--teal-light);box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+    #search-here-btn.visible{display:flex;}
+
     .custom-marker{background:var(--white);border-radius:10px;padding:5px 9px;font-size:13px;font-weight:700;box-shadow:0 4px 10px rgba(0,0,0,0.15);border:2px solid;position:relative;white-space:nowrap;cursor:pointer;display:flex;align-items:center;gap:4px;}
     .custom-marker::after{content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border-width:6px 5px 0;border-style:solid;border-color:inherit;border-bottom-color:transparent!important;border-left-color:transparent!important;border-right-color:transparent!important;}
     .marker-public{border-color:var(--blue);}.marker-free{border-color:var(--green);}.marker-locked{border-color:var(--yellow);}.marker-unknown{border-color:var(--red);}
@@ -104,6 +131,70 @@
     .btn-cancel{background:var(--surface2);color:var(--text2);}.btn-submit{background:var(--teal);color:white;}
     .report-input{width:100%;text-align:center;font-family:'Syne',monospace;font-size:32px;font-weight:800;letter-spacing:8px;border:1px solid var(--border);border-radius:12px;padding:16px;outline:none;margin-bottom:16px;color:var(--gold);}
     .loc-verify{background:var(--blue-light);color:var(--blue);padding:12px;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:20px;}
+
+    /* ===== 건물 클릭 팝업 ===== */
+    #bldg-popup{
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      z-index:1500;display:none;align-items:flex-end;justify-content:center;
+      background:rgba(0,0,0,0.45);
+    }
+    #bldg-popup.active{display:flex;}
+    .popup-card{
+      background:var(--white);border-radius:24px 24px 0 0;
+      width:100%;max-height:85vh;overflow-y:auto;
+      padding:0 0 24px 0;
+      box-shadow:0 -8px 32px rgba(0,0,0,0.18);
+      animation:slideUp 0.28s cubic-bezier(0.2,0.8,0.2,1);
+    }
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    .popup-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:14px auto 0;}
+    .popup-head{padding:16px 20px 12px;border-bottom:1px solid var(--border);position:relative;}
+    .popup-tag{font-size:11px;font-weight:800;color:var(--teal);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
+    .popup-title{font-size:19px;font-weight:800;margin-bottom:2px;}
+    .popup-addr{font-size:12px;color:var(--muted);}
+    .popup-close{position:absolute;right:16px;top:16px;font-size:22px;color:var(--muted);background:none;border:none;cursor:pointer;line-height:1;}
+    .popup-rating{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;margin-top:8px;}
+    .popup-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+    .popup-body{padding:16px 20px;}
+    /* 층별 현황 테이블 */
+    .floor-table{width:100%;border-collapse:collapse;margin-bottom:16px;}
+    .floor-table th{font-size:11px;font-weight:700;color:var(--muted);text-align:left;padding:6px 8px;background:var(--surface2);border-radius:0;}
+    .floor-table th:first-child{border-radius:8px 0 0 8px;}
+    .floor-table th:last-child{border-radius:0 8px 8px 0;}
+    .floor-table td{padding:10px 8px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+    .floor-table tr:last-child td{border-bottom:none;}
+    .ft-badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;font-weight:800;font-size:13px;}
+    .ft-pw{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--gold);letter-spacing:2px;}
+    .ft-nopw{font-size:12px;color:var(--muted);font-weight:600;}
+    .ft-tissue-y{color:var(--green);font-size:13px;font-weight:700;}
+    .ft-tissue-n{color:var(--red);font-size:13px;font-weight:700;}
+    /* 팝업 하단 버튼 3개 */
+    .popup-actions{display:flex;gap:10px;padding:0 20px;margin-top:4px;}
+    .popup-btn{flex:1;padding:13px 0;border-radius:14px;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:opacity 0.15s;}
+    .popup-btn:active{opacity:0.75;}
+    .pbtn-confirm{background:var(--teal);color:white;}
+    .pbtn-register{background:var(--blue-light);color:var(--blue);}
+    .pbtn-edit{background:var(--gold-light);color:var(--gold);border:1px solid #fde68a;}
+    /* 등록 폼 */
+    .reg-form{padding:0 20px;}
+    .reg-section{margin-bottom:16px;}
+    .reg-label{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;display:block;}
+    .reg-input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;font-family:inherit;outline:none;}
+    .reg-input:focus{border-color:var(--teal);}
+    .reg-row{display:flex;gap:10px;}
+    .reg-row .reg-input{flex:1;}
+    .reg-select{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;font-family:inherit;outline:none;background:var(--white);appearance:none;}
+    .reg-toggle-row{display:flex;gap:8px;flex-wrap:wrap;}
+    .reg-toggle{padding:8px 14px;border-radius:20px;border:1.5px solid var(--border);font-size:13px;font-weight:600;cursor:pointer;background:var(--white);color:var(--text2);}
+    .reg-toggle.on{background:var(--teal-light);color:var(--teal2);border-color:var(--teal);}
+    /* 수정 폼 */
+    .edit-floor-list{display:flex;flex-direction:column;gap:10px;padding:0 20px;}
+    .edit-floor-row{display:flex;align-items:center;gap:10px;padding:12px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);}
+    .edit-floor-name{font-size:14px;font-weight:700;flex:1;}
+    .edit-pw-input{width:110px;border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:15px;font-weight:800;font-family:'Syne',monospace;letter-spacing:4px;color:var(--gold);text-align:center;outline:none;}
+    .edit-pw-input:focus{border-color:var(--gold);}
+    .popup-sub-title{font-size:15px;font-weight:800;padding:12px 20px 8px;display:flex;align-items:center;gap:8px;}
+    .popup-back-btn{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);padding:0;}
     .toast{position:fixed;bottom:-60px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,0.9);color:white;padding:12px 20px;border-radius:30px;font-weight:600;font-size:14px;z-index:2000;transition:bottom 0.3s cubic-bezier(0.2,0.8,0.2,1);box-shadow:0 4px 15px rgba(0,0,0,0.2);display:flex;align-items:center;gap:8px;pointer-events:none;}.toast.show{bottom:96px;}
   </style>
 </head>
@@ -113,7 +204,7 @@
       <div class="grid-lines"></div><div class="glow-orb orb1"></div><div class="glow-orb orb2"></div>
       <div class="floating-emojis"><div class="floating-emoji fe1">🚻</div><div class="floating-emoji fe2">🔒</div><div class="floating-emoji fe3">🟢</div><div class="floating-emoji fe4">🏢</div><div class="floating-emoji fe5">🧻</div></div>
       <div class="landing-content">
-        <div class="logo-box syne">Y</div>
+        <div class="logo-box" style="background:none;box-shadow:none;padding:0;overflow:hidden;"><img src="icon.png" alt="YAM" style="width:84px;height:84px;border-radius:26px;object-fit:cover;display:block;"></div>
         <div class="tagline">REAL-TIME TOILET FINDER</div>
         <h1 class="title">급할 때<br><span class="highlight">가장 먼저</span><br>찾는 앱</h1>
         <p class="subtitle">비밀번호, 층별 정보, 휴지 여부까지<br>실시간으로 확인하세요</p>
@@ -123,8 +214,14 @@
       <div class="powered-by">Powered by 테크셀</div>
     </div>
     <div id="mapscreen" class="hidden">
-      <div class="topbar"><div class="small-logo syne">Y</div><div class="search-box"><span>🔍</span><span>장소, 주소 검색</span></div><button class="rec-btn" onclick="openRecSheet()">⭐ 추천</button></div>
+      <div class="topbar"><div class="small-logo" style="padding:0;overflow:hidden;background:none;box-shadow:none;"><img src="icon.png" alt="YAM" style="width:36px;height:36px;border-radius:12px;object-fit:cover;display:block;"></div><div class="search-box"><span>🔍</span><span>장소, 주소 검색</span></div><button class="rec-btn" onclick="openRecSheet()">⭐ 추천</button></div>
       <div id="kakaoMap"></div>
+
+      <!-- 현재위치에서 검색 버튼 -->
+      <button id="search-here-btn" onclick="searchHere()">
+        🔍 현재 위치에서 검색
+      </button>
+
       <div class="loc-pill"><div class="blue-dot"></div><span id="loc-text">위치 찾는 중...</span></div>
       <div class="map-fabs"><button class="fab" onclick="moveToCurrentLoc()">📍</button><button class="fab" onclick="window.location.reload()">🔄</button></div>
       <div class="legend"><div class="legend-item"><div class="dot blue"></div> 공공 화장실</div><div class="legend-item"><div class="dot green"></div> 무료/개방</div><div class="legend-item"><div class="dot yellow"></div> 비밀번호 필요</div><div class="legend-item"><div class="dot red"></div> 정보 없음</div></div>
@@ -135,22 +232,239 @@
     <div class="bottom-sheet" id="detail-sheet"><div class="handle-bar" onclick="closeAllSheets()"></div><div class="sheet-header"><button class="close-btn" onclick="closeAllSheets()">×</button><div class="detail-tag" id="det-tag">TAG</div><h2 class="detail-title" id="det-title">Title</h2><div class="detail-addr" id="det-addr">Address</div><div class="detail-rating-row"><span class="rating-stars" id="det-stars">★★★★★</span><span id="det-rating-val">0.0</span><span style="color:var(--muted);font-weight:400;" id="det-rating-cnt">(0명)</span><span class="rating-link" onclick="openRatingModal()">평가하기</span></div><div class="card-meta" id="det-meta"></div></div><div class="sheet-content"><div class="floor-list" id="det-floors"></div></div></div>
     <div class="modal-overlay" id="rating-modal" onclick="closeModal(event,'rating-modal')"><div class="modal-content"><div class="modal-title">⭐ 화장실 평가하기</div><div class="modal-desc" id="rating-target-name">건물명</div><div class="star-select" id="star-select"><span onclick="setTempRating(1)">★</span><span onclick="setTempRating(2)">★</span><span onclick="setTempRating(3)">★</span><span onclick="setTempRating(4)">★</span><span onclick="setTempRating(5)">★</span></div><div class="rating-label" id="rating-label">별점을 선택해주세요</div><textarea class="modal-textarea" placeholder="선택사항: 한 줄 후기를 남겨주세요"></textarea><div class="modal-actions"><button class="btn-cancel" onclick="closeModal(null,'rating-modal')">취소</button><button class="btn-submit" onclick="submitRating()">평가 제출</button></div></div></div>
     <div class="modal-overlay" id="report-modal" onclick="closeModal(event,'report-modal')"><div class="modal-content"><div class="modal-title">🔑 비밀번호 수정</div><div class="modal-desc"><span id="report-target-name" style="font-weight:700;"></span> 화장실 비밀번호를 알고 계신가요?<br>현장 확인 후 입력해주세요.</div><input type="text" class="report-input" id="report-input" placeholder="----" maxlength="6" inputmode="numeric"><div class="loc-verify">📡 현재 위치가 건물 반경 30m 내에서 확인되었습니다</div><div class="modal-actions"><button class="btn-cancel" onclick="closeModal(null,'report-modal')">취소</button><button class="btn-submit" onclick="submitReport()">제보하기</button></div></div></div>
+
+    <!-- ===== 건물 클릭 팝업 ===== -->
+    <div id="bldg-popup" onclick="popupBgClick(event)">
+      <div class="popup-card" id="popup-card">
+        <div class="popup-handle"></div>
+
+        <!-- 뷰 1: 현황 보기 -->
+        <div id="popup-view-main">
+          <div class="popup-head">
+            <button class="popup-close" onclick="closePopup()">×</button>
+            <div class="popup-tag" id="pp-tag"></div>
+            <div class="popup-title" id="pp-title"></div>
+            <div class="popup-addr" id="pp-addr"></div>
+            <div class="popup-rating"><span style="color:var(--star)" id="pp-stars">★★★★★</span><span id="pp-rating">0.0</span><span style="color:var(--muted);font-weight:400;" id="pp-rcnt">(0명)</span></div>
+            <div class="popup-meta" id="pp-meta"></div>
+          </div>
+          <div class="popup-body">
+            <table class="floor-table">
+              <thead><tr><th>층</th><th>비밀번호</th><th>휴지</th><th>신뢰도</th></tr></thead>
+              <tbody id="pp-floor-tbody"></tbody>
+            </table>
+          </div>
+          <div class="popup-actions">
+            <button class="popup-btn pbtn-confirm" onclick="closePopup()">✅ 확인</button>
+            <button class="popup-btn pbtn-register" onclick="showPopupRegister()">➕ 등록</button>
+            <button class="popup-btn pbtn-edit" onclick="showPopupEdit()">✏️ 수정</button>
+          </div>
+        </div>
+
+        <!-- 뷰 2: 화장실 등록 폼 -->
+        <div id="popup-view-register" style="display:none;">
+          <div class="popup-sub-title">
+            <button class="popup-back-btn" onclick="showPopupMain()">←</button>
+            ➕ 화장실 정보 등록
+          </div>
+          <div class="reg-form">
+            <div class="reg-section">
+              <label class="reg-label">층 이름</label>
+              <input class="reg-input" id="reg-floor-name" placeholder="예: 2층, B1층" />
+            </div>
+            <div class="reg-section">
+              <label class="reg-label">비밀번호 (없으면 비워두세요)</label>
+              <input class="reg-input" id="reg-pw" placeholder="예: 1234" maxlength="6" inputmode="numeric" style="font-family:'Syne',monospace;font-size:20px;letter-spacing:6px;color:var(--gold);" />
+            </div>
+            <div class="reg-section">
+              <label class="reg-label">휴지 비치 여부</label>
+              <div class="reg-toggle-row">
+                <button class="reg-toggle on" id="tog-tissue-y" onclick="setTissueToggle(true)">🧻 있음</button>
+                <button class="reg-toggle" id="tog-tissue-n" onclick="setTissueToggle(false)">❌ 없음</button>
+              </div>
+            </div>
+            <div class="reg-section">
+              <label class="reg-label">개방 여부</label>
+              <div class="reg-toggle-row">
+                <button class="reg-toggle on" id="tog-open-y" onclick="setOpenToggle(true)">🟢 개방</button>
+                <button class="reg-toggle" id="tog-open-n" onclick="setOpenToggle(false)">🔒 잠김</button>
+              </div>
+            </div>
+            <div class="popup-actions" style="padding:0;margin-top:8px;">
+              <button class="popup-btn" style="background:var(--surface2);color:var(--text2);" onclick="showPopupMain()">취소</button>
+              <button class="popup-btn pbtn-confirm" onclick="submitRegister()">등록 완료</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 뷰 3: 비밀번호 수정 폼 -->
+        <div id="popup-view-edit" style="display:none;">
+          <div class="popup-sub-title">
+            <button class="popup-back-btn" onclick="showPopupMain()">←</button>
+            ✏️ 비밀번호 수정
+          </div>
+          <div class="edit-floor-list" id="edit-floor-list"></div>
+          <div class="popup-actions" style="margin-top:16px;">
+            <button class="popup-btn" style="background:var(--surface2);color:var(--text2);" onclick="showPopupMain()">취소</button>
+            <button class="popup-btn pbtn-confirm" onclick="submitEdit()">수정 완료</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
     <div class="toast" id="toast">✅ 메시지</div>
   </div>
   <script>
-    const BUILDINGS={municipal:{id:'municipal',tag:'공공 화장실',title:'강남구 공중화장실',icon:'🚻',addr:'서울 강남구 강남대로 396',dist:'84m',lat:37.4983,lng:127.0285,markerType:'public',isPublic:true,isFree:true,hasTissue:true,rating:4.8,ratingCount:127,meta:['🚻 공공','✅ 무료','🕐 24시간'],floors:[{label:'지상 1층',status:'green',pw:null,tissue:true,conf:95,badge:'1F'},{label:'지하 1층',status:'green',pw:null,tissue:true,conf:88,badge:'B1'}]},station:{id:'station',tag:'지하철역',title:'강남역 2호선 화장실',icon:'🚉',addr:'서울 강남구 강남대로 지하 396',dist:'130m',lat:37.4981,lng:127.0276,markerType:'free',isPublic:true,isFree:true,hasTissue:true,rating:4.6,ratingCount:89,meta:['🚉 지하철','✅ 무료','🧻 휴지'],floors:[{label:'게이트 외부 (B1)',status:'green',pw:null,tissue:true,conf:99,badge:'B1'},{label:'게이트 내부 (B2)',status:'green',pw:null,tissue:true,conf:97,badge:'B2'}]},mall:{id:'mall',tag:'오피스 빌딩',title:'삼성타운 A동',icon:'🏬',addr:'서울 강남구 서초대로74길 11',dist:'210m',lat:37.4997,lng:127.0310,markerType:'locked',isPublic:false,isFree:false,hasTissue:true,rating:3.9,ratingCount:44,meta:['🏢 민간','🔒 비밀번호','🧻 일부'],floors:[{label:'1층',status:'green',pw:null,tissue:true,conf:82,badge:'1F'},{label:'2층',status:'yellow',pw:'2456',tissue:true,conf:73,badge:'2F'},{label:'3층',status:'yellow',pw:'8821',tissue:false,conf:55,badge:'3F'},{label:'4층',status:'red',pw:null,tissue:false,conf:20,badge:'4F'},{label:'5층',status:'yellow',pw:'1234',tissue:true,conf:61,badge:'5F'}]},cafe:{id:'cafe',tag:'카페',title:'스타벅스 강남점',icon:'☕',addr:'서울 강남구 강남대로 452 1층',dist:'160m',lat:37.4975,lng:127.0289,markerType:'locked',isPublic:false,isFree:false,hasTissue:true,rating:3.5,ratingCount:32,meta:['☕ 매장','🔒 비밀번호','💳 구매 후'],floors:[{label:'1층 화장실',status:'yellow',pw:'5823',tissue:true,conf:68,badge:'1F'},{label:'2층 화장실',status:'yellow',pw:'5823',tissue:false,conf:65,badge:'2F'}]},convenience:{id:'convenience',tag:'편의점',title:'GS25 강남역점',icon:'🏪',addr:'서울 강남구 강남대로 400',dist:'95m',lat:37.4978,lng:127.0270,markerType:'unknown',isPublic:false,isFree:false,hasTissue:false,rating:2.8,ratingCount:18,meta:['🏪 매장','❓ 정보 없음'],floors:[{label:'1층 화장실',status:'red',pw:null,tissue:false,conf:15,badge:'1F'}]},dept:{id:'dept',tag:'백화점',title:'현대백화점 무역센터점',icon:'🏢',addr:'서울 강남구 테헤란로 517',dist:'320m',lat:37.5085,lng:127.0630,markerType:'free',isPublic:false,isFree:true,hasTissue:true,rating:4.5,ratingCount:201,meta:['🏬 백화점','✅ 무료','🧻 휴지 완비'],floors:[{label:'B2층',status:'green',pw:null,tissue:true,conf:91,badge:'B2'},{label:'B1층',status:'green',pw:null,tissue:true,conf:93,badge:'B1'},{label:'1층',status:'green',pw:null,tissue:true,conf:89,badge:'1F'},{label:'2층',status:'green',pw:null,tissue:true,conf:88,badge:'2F'},{label:'3층',status:'green',pw:null,tissue:true,conf:87,badge:'3F'},{label:'4층',status:'green',pw:null,tissue:true,conf:85,badge:'4F'}]}};
+    // ===== 화장실 데이터 =====
+    const BUILDINGS={
+      municipal:{id:'municipal',tag:'공공 화장실',title:'강남구 공중화장실',icon:'🚻',addr:'서울 강남구 강남대로 396',dist:'84m',lat:37.4983,lng:127.0285,markerType:'public',isPublic:true,isFree:true,hasTissue:true,rating:4.8,ratingCount:127,meta:['🚻 공공','✅ 무료','🕐 24시간'],floors:[{label:'지상 1층',status:'green',pw:null,tissue:true,conf:95,badge:'1F'},{label:'지하 1층',status:'green',pw:null,tissue:true,conf:88,badge:'B1'}]},
+      station:{id:'station',tag:'지하철역',title:'강남역 2호선 화장실',icon:'🚉',addr:'서울 강남구 강남대로 지하 396',dist:'130m',lat:37.4981,lng:127.0276,markerType:'free',isPublic:true,isFree:true,hasTissue:true,rating:4.6,ratingCount:89,meta:['🚉 지하철','✅ 무료','🧻 휴지'],floors:[{label:'게이트 외부 (B1)',status:'green',pw:null,tissue:true,conf:99,badge:'B1'},{label:'게이트 내부 (B2)',status:'green',pw:null,tissue:true,conf:97,badge:'B2'}]},
+      mall:{id:'mall',tag:'오피스 빌딩',title:'삼성타운 A동',icon:'🏬',addr:'서울 강남구 서초대로74길 11',dist:'210m',lat:37.4997,lng:127.0310,markerType:'locked',isPublic:false,isFree:false,hasTissue:true,rating:3.9,ratingCount:44,meta:['🏢 민간','🔒 비밀번호','🧻 일부'],floors:[{label:'1층',status:'green',pw:null,tissue:true,conf:82,badge:'1F'},{label:'2층',status:'yellow',pw:'2456',tissue:true,conf:73,badge:'2F'},{label:'3층',status:'yellow',pw:'8821',tissue:false,conf:55,badge:'3F'},{label:'4층',status:'red',pw:null,tissue:false,conf:20,badge:'4F'},{label:'5층',status:'yellow',pw:'1234',tissue:true,conf:61,badge:'5F'}]},
+      cafe:{id:'cafe',tag:'카페',title:'스타벅스 강남점',icon:'☕',addr:'서울 강남구 강남대로 452 1층',dist:'160m',lat:37.4975,lng:127.0289,markerType:'locked',isPublic:false,isFree:false,hasTissue:true,rating:3.5,ratingCount:32,meta:['☕ 매장','🔒 비밀번호','💳 구매 후'],floors:[{label:'1층 화장실',status:'yellow',pw:'5823',tissue:true,conf:68,badge:'1F'},{label:'2층 화장실',status:'yellow',pw:'5823',tissue:false,conf:65,badge:'2F'}]},
+      convenience:{id:'convenience',tag:'편의점',title:'GS25 강남역점',icon:'🏪',addr:'서울 강남구 강남대로 400',dist:'95m',lat:37.4978,lng:127.0270,markerType:'unknown',isPublic:false,isFree:false,hasTissue:false,rating:2.8,ratingCount:18,meta:['🏪 매장','❓ 정보 없음'],floors:[{label:'1층 화장실',status:'red',pw:null,tissue:false,conf:15,badge:'1F'}]},
+      dept:{id:'dept',tag:'백화점',title:'현대백화점 무역센터점',icon:'🏢',addr:'서울 강남구 테헤란로 517',dist:'320m',lat:37.5085,lng:127.0630,markerType:'free',isPublic:false,isFree:true,hasTissue:true,rating:4.5,ratingCount:201,meta:['🏬 백화점','✅ 무료','🧻 휴지 완비'],floors:[{label:'B2층',status:'green',pw:null,tissue:true,conf:91,badge:'B2'},{label:'B1층',status:'green',pw:null,tissue:true,conf:93,badge:'B1'},{label:'1층',status:'green',pw:null,tissue:true,conf:89,badge:'1F'},{label:'2층',status:'green',pw:null,tissue:true,conf:88,badge:'2F'},{label:'3층',status:'green',pw:null,tissue:true,conf:87,badge:'3F'},{label:'4층',status:'green',pw:null,tissue:true,conf:85,badge:'4F'}]},
+
+      // ===== 추가된 화장실 데이터 =====
+      coex:{id:'coex',tag:'복합쇼핑몰',title:'코엑스몰 화장실',icon:'🏙',addr:'서울 강남구 봉은사로 524',dist:'850m',lat:37.5125,lng:127.0590,markerType:'free',isPublic:false,isFree:true,hasTissue:true,rating:4.3,ratingCount:312,meta:['🏬 쇼핑몰','✅ 무료','🧻 휴지 완비','🕐 10:30~22:00'],floors:[{label:'B1층 (별마당도서관 앞)',status:'green',pw:null,tissue:true,conf:95,badge:'B1'},{label:'B2층 (푸드코트 옆)',status:'green',pw:null,tissue:true,conf:92,badge:'B2'},{label:'B3층 (주차장 입구)',status:'green',pw:null,tissue:true,conf:88,badge:'B3'}]},
+      gangnam_gu_office:{id:'gangnam_gu_office',tag:'공공기관',title:'강남구청 공중화장실',icon:'🏛',addr:'서울 강남구 학동로 426',dist:'1.1km',lat:37.5172,lng:127.0473,markerType:'public',isPublic:true,isFree:true,hasTissue:true,rating:4.1,ratingCount:56,meta:['🏛 공공기관','✅ 무료','🕐 평일 09~18시'],floors:[{label:'1층',status:'green',pw:null,tissue:true,conf:90,badge:'1F'},{label:'2층',status:'green',pw:null,tissue:true,conf:85,badge:'2F'}]},
+      gangnam_station_exit8:{id:'gangnam_station_exit8',tag:'공중화장실',title:'강남역 8번출구 공중화장실',icon:'🚻',addr:'서울 강남구 강남대로 지상 (8번출구 인근)',dist:'200m',lat:37.4970,lng:127.0280,markerType:'public',isPublic:true,isFree:true,hasTissue:true,rating:3.8,ratingCount:74,meta:['🚻 공공','✅ 무료','🕐 24시간'],floors:[{label:'지상 1층',status:'green',pw:null,tissue:true,conf:80,badge:'1F'}]},
+      seoul_express_terminal:{id:'seoul_express_terminal',tag:'터미널',title:'서울고속버스터미널 화장실',icon:'🚌',addr:'서울 서초구 신반포로 194',dist:'2.3km',lat:37.5049,lng:127.0049,markerType:'free',isPublic:true,isFree:true,hasTissue:true,rating:3.6,ratingCount:189,meta:['🚌 터미널','✅ 무료','🧻 휴지','🕐 24시간'],floors:[{label:'1층 (중앙홀)',status:'green',pw:null,tissue:true,conf:93,badge:'1F'},{label:'B1층 (지하상가)',status:'green',pw:null,tissue:true,conf:88,badge:'B1'},{label:'2층 (대합실)',status:'green',pw:null,tissue:false,conf:70,badge:'2F'}]},
+      yeoksam_park:{id:'yeoksam_park',tag:'공원',title:'역삼공원 공중화장실',icon:'🌳',addr:'서울 강남구 역삼동 649-4',dist:'680m',lat:37.5005,lng:127.0373,markerType:'public',isPublic:true,isFree:true,hasTissue:false,rating:3.2,ratingCount:28,meta:['🌳 공원','✅ 무료','❌ 휴지 없음','🕐 06~23시'],floors:[{label:'지상 1층',status:'yellow',pw:null,tissue:false,conf:65,badge:'1F'}]},
+      gangnam_cgv:{id:'gangnam_cgv',tag:'영화관',title:'CGV 강남',icon:'🎬',addr:'서울 강남구 강남대로 438',dist:'380m',lat:37.4961,lng:127.0285,markerType:'locked',isPublic:false,isFree:false,hasTissue:true,rating:4.2,ratingCount:95,meta:['🎬 영화관','🔒 비밀번호','🧻 휴지 완비'],floors:[{label:'3층 (매표소 옆)',status:'yellow',pw:'7700',tissue:true,conf:78,badge:'3F'},{label:'4층 (스크린 복도)',status:'yellow',pw:'7700',tissue:true,conf:75,badge:'4F'},{label:'5층',status:'yellow',pw:'7700',tissue:true,conf:72,badge:'5F'}]}
+    };
+
     let map=null,currentLat=37.4979,currentLng=127.0276,markers=[],currentBuildingId=null,tempRating=0;
-    function startApp(){document.getElementById('landing').style.opacity='0';setTimeout(()=>{document.getElementById('landing').classList.add('hidden');document.getElementById('mapscreen').classList.remove('hidden');setTimeout(()=>{getLocationAndInitMap();},100);},500);}
-    function getLocationAndInitMap(){if(navigator.geolocation){navigator.geolocation.getCurrentPosition(pos=>initMap(pos.coords.latitude,pos.coords.longitude,false),()=>initMap(37.4979,127.0276,true),{enableHighAccuracy:true,timeout:8000});}else{initMap(37.4979,127.0276,true);}}
-    function initMap(lat,lng,isFallback){currentLat=lat;currentLng=lng;document.getElementById('loc-text').textContent=isFallback?'📍 강남역 · 기본 위치':`📍 현재 위치 · ${lat.toFixed(4)}, ${lng.toFixed(4)}`;const container=document.getElementById('kakaoMap');const options={center:new kakao.maps.LatLng(lat,lng),level:4};map=new kakao.maps.Map(container,options);map.relayout();const locContent=`<div style="position:relative;"><div class="blue-dot" style="position:absolute;top:-4px;left:-4px;width:16px;height:16px;"></div><div style="width:8px;height:8px;background:var(--blue);border-radius:50%;border:2px solid white;position:relative;z-index:1;"></div></div>`;new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(lat,lng),content:locContent,yAnchor:0.5,xAnchor:0.5});renderMarkers();}
-    function renderMarkers(){markers.forEach(m=>m.setMap(null));markers=[];Object.keys(BUILDINGS).forEach(key=>{const b=BUILDINGS[key];const content=document.createElement('div');content.className=`custom-marker marker-${b.markerType}`;content.innerHTML=`<span>${b.icon}</span> <span>${b.title}</span> <span style="color:var(--star)">★${b.rating}</span>`;content.onclick=()=>openBuildingSheet(key);markers.push(new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(b.lat,b.lng),content,yAnchor:1.0,xAnchor:0.5}));});}
-    function moveToCurrentLoc(){if(map)map.panTo(new kakao.maps.LatLng(currentLat,currentLng));}
+    let mapMoved=false,moveTimer=null;
+
+    // ===== kakao SDK 로드 완료 보장 =====
+    function kakaoReady(callback){
+      if(window.kakao && window.kakao.maps && window.kakao.maps.Map){
+        callback();
+      } else {
+        kakao.maps.load(callback);
+      }
+    }
+
+    function startApp(){
+      document.getElementById('landing').style.opacity='0';
+      setTimeout(()=>{
+        document.getElementById('landing').classList.add('hidden');
+        document.getElementById('mapscreen').classList.remove('hidden');
+        setTimeout(()=>{ kakaoReady(getLocationAndInitMap); },100);
+      },500);
+    }
+
+    function getLocationAndInitMap(){
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          pos=>initMap(pos.coords.latitude,pos.coords.longitude,false),
+          ()=>initMap(37.4979,127.0276,true),
+          {enableHighAccuracy:true,timeout:8000}
+        );
+      }else{initMap(37.4979,127.0276,true);}
+    }
+
+    function initMap(lat,lng,isFallback){
+      currentLat=lat;currentLng=lng;
+      // 행정동 역지오코딩
+      if(isFallback){
+        document.getElementById('loc-text').textContent='📍 강남역 · 기본 위치';
+      } else {
+        document.getElementById('loc-text').textContent='📍 위치 확인 중...';
+        kakao.maps.load(()=>{
+          const geocoder=new kakao.maps.services.Geocoder();
+          geocoder.coord2RegionCode(lng,lat,(result,status)=>{
+            if(status===kakao.maps.services.Status.OK){
+              const region=result.find(r=>r.region_type==='H')||result[0];
+              const dong=region.region_3depth_name||region.region_2depth_name||'';
+              document.getElementById('loc-text').textContent='📍 '+dong;
+            } else {
+              document.getElementById('loc-text').textContent='📍 '+lat.toFixed(4)+', '+lng.toFixed(4);
+            }
+          });
+        });
+      }
+      const container=document.getElementById('kakaoMap');
+      const options={center:new kakao.maps.LatLng(lat,lng),level:4};
+      map=new kakao.maps.Map(container,options);
+      map.relayout();
+      const locContent=`<div style="position:relative;"><div class="blue-dot" style="position:absolute;top:-4px;left:-4px;width:16px;height:16px;"></div><div style="width:8px;height:8px;background:var(--blue);border-radius:50%;border:2px solid white;position:relative;z-index:1;"></div></div>`;
+      new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(lat,lng),content:locContent,yAnchor:0.5,xAnchor:0.5});
+      renderMarkers();
+
+      // ===== 지도 이동 감지 → "현재위치에서 검색" 버튼 표시 =====
+      kakao.maps.event.addListener(map,'dragstart',()=>{
+        mapMoved=true;
+        clearTimeout(moveTimer);
+      });
+      kakao.maps.event.addListener(map,'dragend',()=>{
+        showSearchHereBtn();
+      });
+      kakao.maps.event.addListener(map,'zoom_changed',()=>{
+        if(mapMoved) showSearchHereBtn();
+      });
+    }
+
+    function showSearchHereBtn(){
+      document.getElementById('search-here-btn').classList.add('visible');
+    }
+
+    function hideSearchHereBtn(){
+      document.getElementById('search-here-btn').classList.remove('visible');
+    }
+
+    // 현재 지도 중심 기준으로 마커 새로고침
+    function searchHere(){
+      const center=map.getCenter();
+      const cLat=center.getLat();
+      const cLng=center.getLng();
+
+      // 각 건물까지 거리 재계산 (현재 지도 중심 기준)
+      Object.values(BUILDINGS).forEach(b=>{
+        const d=getDistanceM(cLat,cLng,b.lat,b.lng);
+        b.dist=d<1000?`${Math.round(d)}m`:`${(d/1000).toFixed(1)}km`;
+      });
+
+      renderMarkers();
+      hideSearchHereBtn();
+      showToast('🔍 현재 위치 기준으로 새로 불러왔어요');
+    }
+
+    // 두 좌표 간 거리 계산 (Haversine)
+    function getDistanceM(lat1,lng1,lat2,lng2){
+      const R=6371000;
+      const dLat=(lat2-lat1)*Math.PI/180;
+      const dLng=(lng2-lng1)*Math.PI/180;
+      const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+      return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    }
+
+    function renderMarkers(){
+      markers.forEach(m=>m.setMap(null));markers=[];
+      Object.keys(BUILDINGS).forEach(key=>{
+        const b=BUILDINGS[key];
+        const content=document.createElement('div');
+        content.className=`custom-marker marker-${b.markerType}`;
+        content.innerHTML=`<span>${b.icon}</span> <span>${b.title}</span> <span style="color:var(--star)">★${b.rating}</span>`;
+        content.onclick=()=>openBuildingPopup(key);
+        markers.push(new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(b.lat,b.lng),content,yAnchor:1.0,xAnchor:0.5}));
+      });
+    }
+
+    function moveToCurrentLoc(){
+      if(map){
+        map.panTo(new kakao.maps.LatLng(currentLat,currentLng));
+        mapMoved=false;
+        hideSearchHereBtn();
+      }
+    }
+
     function closeAllSheets(){document.getElementById('sheet-overlay').classList.remove('active');document.getElementById('rec-sheet').classList.remove('active');document.getElementById('detail-sheet').classList.remove('active');}
     function openRecSheet(){closeAllSheets();document.getElementById('sheet-overlay').classList.add('active');document.getElementById('rec-sheet').classList.add('active');applyFilter('all');}
     let currentFilter='all';
     function applyFilter(filterType){currentFilter=filterType;document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));event&&event.target&&event.target.classList.add('active');let arr=Object.values(BUILDINGS);if(filterType==='open')arr=arr.filter(b=>b.isPublic||b.isFree);if(filterType==='tissue')arr=arr.filter(b=>b.hasTissue);if(filterType==='free')arr=arr.filter(b=>b.isFree);if(filterType==='high')arr.sort((a,b)=>b.rating-a.rating);arr.forEach(b=>{let s=b.rating*20;if(b.isPublic)s+=15;if(b.isFree)s+=10;if(b.hasTissue)s+=8;b._score=s;});if(filterType!=='high')arr.sort((a,b)=>b._score-a._score);renderRecCards(arr.slice(0,3));}
     function renderRecCards(buildings){const container=document.getElementById('rec-content');container.innerHTML='';if(!buildings.length){container.innerHTML='<div style="text-align:center;padding:40px 0;color:var(--muted);">조건에 맞는 화장실이 없습니다.</div>';return;}buildings.forEach((b,i)=>{const rank=i+1;const metaHtml=b.meta.map(m=>`<span class="meta-tag">${m}</span>`).join('');container.innerHTML+=`<div class="rec-card rank-${rank}"><div class="card-top"><div class="card-title-box"><span style="font-size:18px;">${b.icon}</span><span class="card-title">${b.title}</span></div><div class="rank-badge rank-${rank}-badge">${rank}위</div></div><div class="card-addr">${b.addr} <span class="card-dist">📍 약 ${b.dist}</span></div><div class="card-rating">★★★★★ ${b.rating} <span style="color:var(--muted);font-weight:400;font-size:12px;">(${b.ratingCount}명)</span></div><div class="card-meta">${metaHtml}</div><div class="card-actions"><button class="action-btn btn-primary" onclick="viewFromRec('${b.id}')">🗺 자세히 보기</button><button class="action-btn btn-secondary" onclick="openRatingFromRec('${b.id}')">⭐ 평가하기</button></div></div>`;});}
-    function viewFromRec(id){const b=BUILDINGS[id];if(map)map.panTo(new kakao.maps.LatLng(b.lat,b.lng));openBuildingSheet(id);}
+    function viewFromRec(id){const b=BUILDINGS[id];if(map)map.panTo(new kakao.maps.LatLng(b.lat,b.lng));openBuildingPopup(id);}
     function openRatingFromRec(id){currentBuildingId=id;openRatingModal();}
     function openBuildingSheet(id){currentBuildingId=id;const b=BUILDINGS[id];closeAllSheets();document.getElementById('sheet-overlay').classList.add('active');document.getElementById('detail-sheet').classList.add('active');document.getElementById('det-tag').textContent=b.tag;document.getElementById('det-title').textContent=`${b.icon} ${b.title}`;document.getElementById('det-addr').textContent=`${b.addr} · 약 ${b.dist}`;document.getElementById('det-rating-val').textContent=b.rating;document.getElementById('det-rating-cnt').textContent=`(${b.ratingCount}명)`;document.getElementById('det-stars').innerHTML=getStarHtml(b.rating);document.getElementById('det-meta').innerHTML=b.meta.map((m,i)=>`<span class="meta-tag" style="${i===0?'background:var(--teal-light);color:var(--teal2);':''}">${m}</span>`).join('');const fContainer=document.getElementById('det-floors');fContainer.innerHTML='';b.floors.forEach((f,idx)=>{const pwBadge=f.pw?`<div class="floor-pw-badge pw-badge-gold">🔑 ${f.pw}</div>`:`<div class="floor-pw-badge pw-badge-none">${f.status==='red'?'정보없음':'비밀번호 없음'}</div>`;const statusText=f.tissue?'🧻 휴지있음':'❌ 휴지없음';const confColor=f.conf>=80?'green':(f.conf>=50?'yellow':'red');const confText=f.conf>=80?'🟢 인증 완료':(f.conf>=50?'🟡 일부 확인':'🔴 확인 필요');fContainer.innerHTML+=`<div class="floor-card"><div class="floor-header" onclick="toggleFloorDetail(${idx})"><div class="floor-info-left"><div class="floor-badge badge-${f.status}">${f.badge}</div><div class="floor-name-wrap"><div class="floor-name">${f.label}</div><div class="floor-status-text">${statusText} · <span style="color:var(--${f.status})">●</span></div></div></div>${pwBadge}</div><div class="floor-detail" id="floor-detail-${idx}"><div class="pw-box-large"><div class="pw-box-left"><div class="pw-label">비밀번호</div><div class="pw-value ${f.pw?'':'no-pw'}">${f.pw||(f.status==='red'?'정보 없음':'필요 없음')}</div></div><div class="pw-box-right"><div class="pw-label" style="margin-bottom:4px;">정보 신뢰도</div><div class="conf-status conf-${confColor}">${confText} (${f.conf}%)</div></div></div><div class="conf-bar-wrap"><div class="conf-bar ${confColor}" style="width:${f.conf}%"></div></div><button class="report-btn" onclick="openReportModal('${f.label}')">✏️ 비밀번호 수정 제보하기</button></div></div>`;});}
     function getStarHtml(r){let s='';for(let i=1;i<=5;i++)s+=i<=Math.round(r)?'★':'☆';return s;}
@@ -162,6 +476,129 @@
     function openReportModal(floorName){document.getElementById('report-target-name').textContent=`[${floorName}]`;document.getElementById('report-input').value='';document.getElementById('report-modal').classList.add('active');}
     function submitReport(){const val=document.getElementById('report-input').value;if(val.length<3)return showToast('비밀번호를 정확히 입력해주세요.');closeModal(null,'report-modal');showToast('✅ 제보 완료! 3명 이상 동일 입력 시 반영됩니다.');}
     function closeModal(e,id){if(!e||e.target.id===id)document.getElementById(id).classList.remove('active');}
+
+    // ===== 건물 팝업 시스템 =====
+    let popupBuildingId=null;
+    let regTissue=true, regOpen=true;
+
+    function openBuildingPopup(id){
+      popupBuildingId=id;
+      currentBuildingId=id;
+      const b=BUILDINGS[id];
+      closeAllSheets();
+      // 헤더
+      document.getElementById('pp-tag').textContent=b.tag;
+      document.getElementById('pp-title').textContent=b.icon+' '+b.title;
+      document.getElementById('pp-addr').textContent=b.addr+' · 약 '+b.dist;
+      document.getElementById('pp-rating').textContent=b.rating;
+      document.getElementById('pp-rcnt').textContent='('+b.ratingCount+'명)';
+      document.getElementById('pp-stars').innerHTML=getStarHtml(b.rating);
+      document.getElementById('pp-meta').innerHTML=b.meta.map(m=>'<span class="meta-tag">'+m+'</span>').join('');
+      // 층별 테이블
+      const tbody=document.getElementById('pp-floor-tbody');
+      tbody.innerHTML='';
+      if(!b.floors||b.floors.length===0){
+        tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px;">등록된 층 정보가 없습니다</td></tr>';
+      } else {
+        b.floors.forEach(f=>{
+          const badgeCls=f.status==='green'?'badge-green':(f.status==='yellow'?'badge-yellow':'badge-red');
+          const pwCell=f.pw?'<span class="ft-pw">'+f.pw+'</span>':'<span class="ft-nopw">'+(f.status==='red'?'정보없음':'없음')+'</span>';
+          const tissueCell=f.tissue?'<span class="ft-tissue-y">🧻 있음</span>':'<span class="ft-tissue-n">❌ 없음</span>';
+          const confBar=f.conf>=80?'🟢':(f.conf>=50?'🟡':'🔴');
+          tbody.innerHTML+='<tr><td><span class="ft-badge '+badgeCls+'">'+f.badge+'</span></td><td>'+pwCell+'</td><td>'+tissueCell+'</td><td>'+confBar+' '+f.conf+'%</td></tr>';
+        });
+      }
+      showPopupMain();
+      document.getElementById('bldg-popup').classList.add('active');
+    }
+
+    function closePopup(){
+      document.getElementById('bldg-popup').classList.remove('active');
+    }
+
+    function popupBgClick(e){
+      if(e.target.id==='bldg-popup') closePopup();
+    }
+
+    function showPopupMain(){
+      document.getElementById('popup-view-main').style.display='';
+      document.getElementById('popup-view-register').style.display='none';
+      document.getElementById('popup-view-edit').style.display='none';
+    }
+
+    function showPopupRegister(){
+      document.getElementById('popup-view-main').style.display='none';
+      document.getElementById('popup-view-register').style.display='';
+      document.getElementById('popup-view-edit').style.display='none';
+      document.getElementById('reg-floor-name').value='';
+      document.getElementById('reg-pw').value='';
+      regTissue=true; regOpen=true;
+      setTissueToggle(true); setOpenToggle(true);
+    }
+
+    function showPopupEdit(){
+      const b=BUILDINGS[popupBuildingId];
+      document.getElementById('popup-view-main').style.display='none';
+      document.getElementById('popup-view-register').style.display='none';
+      document.getElementById('popup-view-edit').style.display='';
+      const list=document.getElementById('edit-floor-list');
+      list.innerHTML='';
+      if(!b.floors||b.floors.length===0){
+        list.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);">등록된 층 정보가 없습니다.<br>먼저 등록을 해주세요.</div>';
+        return;
+      }
+      b.floors.forEach((f,idx)=>{
+        list.innerHTML+='<div class="edit-floor-row"><div class="edit-floor-name">'+f.badge+' '+f.label+'</div><input class="edit-pw-input" id="edit-pw-'+idx+'" placeholder="----" maxlength="6" inputmode="numeric" value="'+(f.pw||'')+'" /></div>';
+      });
+    }
+
+    function setTissueToggle(val){
+      regTissue=val;
+      document.getElementById('tog-tissue-y').className='reg-toggle'+(val?' on':'');
+      document.getElementById('tog-tissue-n').className='reg-toggle'+(!val?' on':'');
+    }
+
+    function setOpenToggle(val){
+      regOpen=val;
+      document.getElementById('tog-open-y').className='reg-toggle'+(val?' on':'');
+      document.getElementById('tog-open-n').className='reg-toggle'+(!val?' on':'');
+    }
+
+    function submitRegister(){
+      const floorName=document.getElementById('reg-floor-name').value.trim();
+      if(!floorName) return showToast('층 이름을 입력해주세요.');
+      const pw=document.getElementById('reg-pw').value.trim()||null;
+      const b=BUILDINGS[popupBuildingId];
+      const floorCount=b.floors.length;
+      const badge=floorName.replace(/[^0-9BbFf]/g,'')||String(floorCount+1)+'F';
+      const status=regOpen?(pw?'yellow':'green'):'red';
+      b.floors.push({label:floorName,status,pw,tissue:regTissue,conf:70,badge:badge.toUpperCase()||String(floorCount+1)+'F'});
+      // 마커 타입 갱신
+      if(pw) b.markerType='locked';
+      renderMarkers();
+      showToast('✅ '+floorName+' 정보가 등록됐어요!');
+      openBuildingPopup(popupBuildingId);
+    }
+
+    function submitEdit(){
+      const b=BUILDINGS[popupBuildingId];
+      b.floors.forEach((f,idx)=>{
+        const input=document.getElementById('edit-pw-'+idx);
+        if(input){
+          const val=input.value.trim();
+          f.pw=val||null;
+          f.status=val?'yellow':'green';
+          f.conf=Math.min(f.conf+10,95);
+        }
+      });
+      // markerType 갱신
+      const hasPw=b.floors.some(f=>f.pw);
+      b.markerType=b.isPublic?'public':(hasPw?'locked':(b.isFree?'free':'unknown'));
+      renderMarkers();
+      showToast('✅ 비밀번호 정보가 수정됐어요!');
+      openBuildingPopup(popupBuildingId);
+    }
+
     let toastTimeout;
     function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>el.classList.remove('show'),2800);}
     if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}
