@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>얌 YAM - 카드뉴스</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Noto Sans KR', sans-serif;
+    overflow: hidden;
+  }
+  #card-container {
+    position: relative;
+    width: 390px;
+    height: 693px;
+    perspective: 1200px;
+  }
+  .slide {
+    position: absolute;
+    inset: 0;
+    border-radius: 28px;
+    overflow: hidden;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  }
+  .slide.active { display: flex; }
+  canvas.bg-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .slide-content {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 28px;
+    pointer-events: none;
+  }
+
+  /* NAV */
+  #nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 20px;
+    z-index: 100;
+  }
+  .nav-btn {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    backdrop-filter: blur(8px);
+  }
+  .nav-btn:hover { background: rgba(0,184,150,0.5); border-color: #00b896; }
+  #rec-btn {
+    margin-top: 14px;
+    padding: 10px 28px;
+    border-radius: 24px;
+    border: none;
+    background: linear-gradient(135deg, #00b896, #2563eb);
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,184,150,0.4);
+    transition: all 0.2s;
+  }
+  #rec-btn.recording {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 6px 20px rgba(239,68,68,0.5);
+    animation: recPulse 1s ease-in-out infinite;
+  }
+  @keyframes recPulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  #rec-status { margin-top: 8px; font-size: 12px; color: rgba(255,255,255,0.5); font-family: 'Noto Sans KR', sans-serif; text-align: center; }
+  .dots {
+    display: flex; gap: 8px;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .dot.active { background: #00b896; width: 24px; border-radius: 4px; }
+
+  /* SLIDE 1 */
+  #s1 { background: linear-gradient(160deg, #003d30, #001a3a, #0a0a1a); }
+  .s1-badge {
+    margin-top: 52px;
+    background: rgba(0,184,150,0.2);
+    border: 1.5px solid rgba(0,184,150,0.5);
+    border-radius: 20px;
+    padding: 6px 16px;
+    color: #00b896;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+  }
+  .s1-logo {
+    margin-top: 18px;
+    font-size: 68px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #00b896, #4affda, #2563eb);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+  .s1-yam { font-size: 22px; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.3em; margin-top: 4px; }
+  .s1-canvas-wrap { width: 260px; height: 220px; position: relative; flex-shrink: 0; }
+  .s1-canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .s1-headline {
+    font-size: 28px;
+    font-weight: 900;
+    color: white;
+    text-align: center;
+    line-height: 1.3;
+    margin-top: -10px;
+  }
+  .s1-sub {
+    margin-top: 10px;
+    font-size: 15px;
+    color: rgba(255,255,255,0.6);
+    text-align: center;
+  }
+  .s1-pill {
+    margin-top: 20px;
+    background: linear-gradient(135deg, #00b896, #2563eb);
+    border-radius: 24px;
+    padding: 12px 32px;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    box-shadow: 0 8px 24px rgba(0,184,150,0.4);
+  }
+
+  /* SLIDE 2 */
+  #s2 { background: linear-gradient(160deg, #1a0f2e, #0d1b3e, #0a1628); }
+  .s2-title {
+    margin-top: 52px;
+    font-size: 22px;
+    font-weight: 900;
+    color: white;
+    text-align: center;
+  }
+  .s2-sub { font-size: 14px; color: rgba(255,255,255,0.5); margin-top: 6px; text-align: center; }
+  .s2-canvas-wrap { width: 320px; height: 240px; position: relative; flex-shrink: 0; margin-top: 10px; }
+  .s2-canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .s2-items { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-top: 10px; }
+  .s2-item {
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 14px 16px;
+    backdrop-filter: blur(8px);
+  }
+  .s2-icon { font-size: 26px; flex-shrink: 0; }
+  .s2-text { font-size: 13.5px; color: rgba(255,255,255,0.85); font-weight: 500; line-height: 1.4; }
+
+  /* SLIDE 3 */
+  #s3 { background: linear-gradient(160deg, #002e24, #001f40, #0a0a20); }
+  .s3-title {
+    margin-top: 52px;
+    font-size: 26px;
+    font-weight: 900;
+    color: white;
+    text-align: center;
+  }
+  .s3-accent { color: #00b896; }
+  .s3-canvas-wrap { width: 280px; height: 240px; position: relative; flex-shrink: 0; margin-top: 8px; }
+  .s3-canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .s3-features { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 6px; }
+  .s3-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: rgba(0,184,150,0.08);
+    border: 1px solid rgba(0,184,150,0.2);
+    border-radius: 14px;
+  }
+  .s3-emoji { font-size: 22px; }
+  .s3-feat-text { font-size: 13px; color: rgba(255,255,255,0.9); font-weight: 600; }
+
+  /* SLIDE 4 */
+  #s4 { background: linear-gradient(160deg, #0d1530, #001a2e, #001228); }
+  .s4-title {
+    margin-top: 52px;
+    font-size: 26px;
+    font-weight: 900;
+    color: white;
+    text-align: center;
+  }
+  .s4-canvas-wrap { width: 340px; height: 220px; position: relative; flex-shrink: 0; margin-top: 10px; }
+  .s4-canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .s4-cards { display: flex; flex-direction: column; gap: 10px; width: 100%; margin-top: 10px; }
+  .s4-card {
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(255,255,255,0.05);
+    border-left: 3px solid #00b896;
+    border-radius: 0 14px 14px 0;
+    padding: 12px 16px;
+  }
+  .s4-num { font-size: 22px; font-weight: 900; color: #00b896; width: 32px; flex-shrink: 0; }
+  .s4-card-title { font-size: 14px; font-weight: 700; color: white; }
+  .s4-card-desc { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+
+  /* SLIDE 5 */
+  #s5 { background: linear-gradient(160deg, #003d30, #001a3a, #0a0a1a); }
+  .s5-canvas-wrap { width: 340px; height: 280px; position: relative; flex-shrink: 0; margin-top: 40px; }
+  .s5-canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .s5-title {
+    font-size: 28px;
+    font-weight: 900;
+    color: white;
+    text-align: center;
+    line-height: 1.3;
+    margin-top: -10px;
+  }
+  .s5-sub { font-size: 14px; color: rgba(255,255,255,0.5); text-align: center; margin-top: 8px; }
+  .s5-btn {
+    margin-top: 20px;
+    background: linear-gradient(135deg, #00b896, #2563eb);
+    border-radius: 28px;
+    padding: 16px 48px;
+    color: white;
+    font-size: 18px;
+    font-weight: 900;
+    box-shadow: 0 12px 32px rgba(0,184,150,0.5);
+    letter-spacing: -0.5px;
+  }
+  .s5-url { margin-top: 16px; font-size: 12px; color: rgba(255,255,255,0.35); }
+</style>
+</head>
+<body>
+
+<div id="card-container">
+
+  <!-- SLIDE 1 -->
+  <div class="slide active" id="s1">
+    <canvas class="bg-canvas" id="bg1"></canvas>
+    <div class="slide-content">
+      <div class="s1-badge">급할 때 찾는 앱 · SINCE 2024</div>
+      <div class="s1-logo">얌</div>
+      <div class="s1-yam">Y A M</div>
+      <div class="s1-canvas-wrap"><canvas id="c1"></canvas></div>
+      <div class="s1-headline">급할 때,<br>바로 찾자 🚀</div>
+      <div class="s1-sub">내 주변 공중화장실 지도 앱</div>
+      <div class="s1-pill">지금 무료로 시작하기</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide" id="s2">
+    <canvas class="bg-canvas" id="bg2"></canvas>
+    <div class="slide-content">
+      <div class="s2-title">😰 이런 상황<br>겪어본 적 있나요?</div>
+      <div class="s2-sub">당신만 그런 게 아닙니다</div>
+      <div class="s2-canvas-wrap"><canvas id="c2"></canvas></div>
+      <div class="s2-items">
+        <div class="s2-item">
+          <div class="s2-icon">🗺️</div>
+          <div class="s2-text">낯선 곳에서 화장실을 몰라<br>당황했던 순간</div>
+        </div>
+        <div class="s2-item">
+          <div class="s2-icon">✈️</div>
+          <div class="s2-text">여행 중 급하게 화장실이<br>필요한데 찾을 수가 없을 때</div>
+        </div>
+        <div class="s2-item">
+          <div class="s2-icon">👶</div>
+          <div class="s2-text">아이 데리고 기저귀 갈<br>곳을 찾아 헤맬 때</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3 -->
+  <div class="slide" id="s3">
+    <canvas class="bg-canvas" id="bg3"></canvas>
+    <div class="slide-content">
+      <div class="s3-title"><span class="s3-accent">얌</span>이 해결합니다</div>
+      <div class="s3-canvas-wrap"><canvas id="c3"></canvas></div>
+      <div class="s3-features">
+        <div class="s3-row"><span class="s3-emoji">📍</span><span class="s3-feat-text">현위치 기반 즉시 검색</span></div>
+        <div class="s3-row"><span class="s3-emoji">🚻</span><span class="s3-feat-text">공공화장실 전국 데이터 보유</span></div>
+        <div class="s3-row"><span class="s3-emoji">♿</span><span class="s3-feat-text">장애인 화장실 전용 필터</span></div>
+        <div class="s3-row"><span class="s3-emoji">👶</span><span class="s3-feat-text">기저귀 교환대 있는 곳만 보기</span></div>
+        <div class="s3-row"><span class="s3-emoji">🕐</span><span class="s3-feat-text">24시간 운영 화장실 필터</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4 -->
+  <div class="slide" id="s4">
+    <canvas class="bg-canvas" id="bg4"></canvas>
+    <div class="slide-content">
+      <div class="s4-title">왜 <span style="color:#00b896">얌</span>인가?</div>
+      <div class="s4-canvas-wrap"><canvas id="c4"></canvas></div>
+      <div class="s4-cards">
+        <div class="s4-card">
+          <div class="s4-num">01</div>
+          <div>
+            <div class="s4-card-title">⚡ 지도 앱보다 빠르게</div>
+            <div class="s4-card-desc">화장실 검색 특화 — 3초 안에 결과</div>
+          </div>
+        </div>
+        <div class="s4-card">
+          <div class="s4-num">02</div>
+          <div>
+            <div class="s4-card-title">🏛️ 공공데이터 기반 신뢰성</div>
+            <div class="s4-card-desc">전국 공공화장실 공식 데이터 연동</div>
+          </div>
+        </div>
+        <div class="s4-card">
+          <div class="s4-num">03</div>
+          <div>
+            <div class="s4-card-title">✨ 직관적인 UI</div>
+            <div class="s4-card-desc">앱 설치 없이 웹에서 바로 사용</div>
+          </div>
+        </div>
+        <div class="s4-card">
+          <div class="s4-num">04</div>
+          <div>
+            <div class="s4-card-title">🌐 한국어 · 영어 지원</div>
+            <div class="s4-card-desc">외국인 관광객도 쉽게 사용 가능</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5 -->
+  <div class="slide" id="s5">
+    <canvas class="bg-canvas" id="bg5"></canvas>
+    <div class="slide-content">
+      <div class="s5-canvas-wrap"><canvas id="c5"></canvas></div>
+      <div class="s5-title">지금 바로<br>시작하세요 🎉</div>
+      <div class="s5-sub">설치 없이 웹에서 바로 사용</div>
+      <div class="s5-btn">얌 시작하기</div>
+      <div class="s5-url">yam-tau.vercel.app</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAV -->
+<div id="nav">
+  <button class="nav-btn" id="prev">‹</button>
+  <div class="dots">
+    <div class="dot active" data-i="0"></div>
+    <div class="dot" data-i="1"></div>
+    <div class="dot" data-i="2"></div>
+    <div class="dot" data-i="3"></div>
+    <div class="dot" data-i="4"></div>
+  </div>
+  <button class="nav-btn" id="next">›</button>
+</div>
+<button id="rec-btn" onclick="toggleRecord()">🎬 영상 녹화 시작</button>
+<div id="rec-status">슬라이드 자동 전환 · 25초 영상 생성</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ───────────────────────────────────────────────
+// SLIDE ENGINE
+// ───────────────────────────────────────────────
+const slides = document.querySelectorAll('.slide');
+const dots = document.querySelectorAll('.dot');
+let current = 0;
+
+function goTo(i) {
+  slides[current].classList.remove('active');
+  dots[current].classList.remove('active');
+  current = (i + slides.length) % slides.length;
+  slides[current].classList.add('active');
+  dots[current].classList.add('active');
+}
+
+document.getElementById('prev').onclick = () => goTo(current - 1);
+document.getElementById('next').onclick = () => goTo(current + 1);
+dots.forEach(d => d.onclick = () => goTo(+d.dataset.i));
+
+// ───────────────────────────────────────────────
+// VIDEO RECORDER
+// ───────────────────────────────────────────────
+let mediaRecorder = null;
+let recordedChunks = [];
+let recTimers = [];
+
+function toggleRecord() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    stopRecord();
+  } else {
+    startRecord();
+  }
+}
+
+async function startRecord() {
+  // 오프스크린 합성 캔버스 생성 (390x693)
+  const offCanvas = document.createElement('canvas');
+  offCanvas.width = 390;
+  offCanvas.height = 693;
+  const ctx = offCanvas.getContext('2d');
+
+  // 슬라이드 0으로 이동
+  goTo(0);
+
+  const btn = document.getElementById('rec-btn');
+  const status = document.getElementById('rec-status');
+  btn.textContent = '⏹ 녹화 중지';
+  btn.classList.add('recording');
+  status.textContent = '🔴 녹화 중... 슬라이드 자동 전환';
+
+  recordedChunks = [];
+
+  // 매 프레임마다 카드 컨테이너를 offCanvas에 그림
+  const container = document.getElementById('card-container');
+  const stream = offCanvas.captureStream(30);
+
+  // 슬라이드 자동 전환 타이머 (5초씩)
+  const slideInterval = 5000;
+  for (let i = 1; i < 5; i++) {
+    const t = setTimeout(() => goTo(i), slideInterval * i);
+    recTimers.push(t);
+  }
+  // 25초 후 자동 종료
+  const endTimer = setTimeout(() => stopRecord(), slideInterval * 5);
+  recTimers.push(endTimer);
+
+  // 화면 -> offCanvas 복사 루프 (html2canvas 대신 dom-to-image 없이 간단히)
+  let capturing = true;
+  async function captureLoop() {
+    if (!capturing) return;
+    // 현재 카드 컨테이너를 이미지로 캡처 (CSS paint + canvas 합성)
+    try {
+      const img = await htmlToCanvasSimple(container, offCanvas, ctx);
+    } catch(e) {}
+    if (capturing) requestAnimationFrame(captureLoop);
+  }
+
+  // html2canvas가 없으므로, 배경 캔버스들만 합성
+  function renderFrame() {
+    if (!capturing) return;
+    ctx.clearRect(0, 0, 390, 693);
+
+    // 활성 슬라이드의 배경 캔버스 찾기
+    const activeSlide = document.querySelector('.slide.active');
+    if (!activeSlide) { requestAnimationFrame(renderFrame); return; }
+
+    // 슬라이드 배경색 그리기
+    const bgColors = {
+      's1': ['#003d30','#001a3a','#0a0a1a'],
+      's2': ['#1a0f2e','#0d1b3e','#0a1628'],
+      's3': ['#002e24','#001f40','#0a0a20'],
+      's4': ['#0d1530','#001a2e','#001228'],
+      's5': ['#003d30','#001a3a','#0a0a1a'],
+    };
+    const id = activeSlide.id;
+    const cols = bgColors[id] || ['#0a0a1a','#0a0a1a','#0a0a1a'];
+    const grad = ctx.createLinearGradient(0, 0, 390, 693);
+    grad.addColorStop(0, cols[0]);
+    grad.addColorStop(0.5, cols[1]);
+    grad.addColorStop(1, cols[2]);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 390, 693);
+
+    // 배경 파티클 캔버스
+    const bgCanvas = activeSlide.querySelector('.bg-canvas');
+    if (bgCanvas) ctx.drawImage(bgCanvas, 0, 0, 390, 693);
+
+    // 3D 씬 캔버스
+    const sceneCanvas = activeSlide.querySelector('.s1-canvas-wrap canvas, .s2-canvas-wrap canvas, .s3-canvas-wrap canvas, .s4-canvas-wrap canvas, .s5-canvas-wrap canvas');
+    if (sceneCanvas) {
+      const wrap = sceneCanvas.closest('[class*="-canvas-wrap"]');
+      if (wrap) {
+        const rect = wrap.getBoundingClientRect();
+        const cardRect = document.getElementById('card-container').getBoundingClientRect();
+        const x = rect.left - cardRect.left;
+        const y = rect.top - cardRect.top;
+        ctx.drawImage(sceneCanvas, x, y, rect.width, rect.height);
+      }
+    }
+
+    // UI 텍스트 오버레이 (간단 재현)
+    drawUI(ctx, id);
+
+    requestAnimationFrame(renderFrame);
+  }
+
+  function drawUI(ctx, id) {
+    ctx.save();
+    ctx.font = '700 12px "Noto Sans KR", sans-serif';
+    ctx.textAlign = 'center';
+
+    if (id === 's1') {
+      // badge
+      ctx.fillStyle = 'rgba(0,184,150,0.2)';
+      roundRect(ctx, 110, 46, 170, 28, 14);
+      ctx.fillStyle = '#00b896';
+      ctx.font = '700 11px sans-serif';
+      ctx.letterSpacing = '0.1em';
+      ctx.fillText('급할 때 찾는 앱 · SINCE 2024', 195, 64);
+      // 얌
+      ctx.font = '900 68px "Noto Sans KR", sans-serif';
+      const grad = ctx.createLinearGradient(100, 80, 280, 160);
+      grad.addColorStop(0, '#00b896');
+      grad.addColorStop(0.5, '#4affda');
+      grad.addColorStop(1, '#2563eb');
+      ctx.fillStyle = grad;
+      ctx.fillText('얌', 195, 165);
+      ctx.font = '700 18px sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.45)';
+      ctx.letterSpacing = '0.3em';
+      ctx.fillText('Y  A  M', 195, 192);
+      // headline
+      ctx.font = '900 28px "Noto Sans KR", sans-serif';
+      ctx.fillStyle = 'white';
+      ctx.letterSpacing = '0';
+      ctx.fillText('급할 때, 바로 찾자 🚀', 195, 448);
+      ctx.font = '500 15px "Noto Sans KR", sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillText('내 주변 공중화장실 지도 앱', 195, 476);
+      // button
+      const btnGrad = ctx.createLinearGradient(80, 500, 310, 540);
+      btnGrad.addColorStop(0, '#00b896');
+      btnGrad.addColorStop(1, '#2563eb');
+      ctx.fillStyle = btnGrad;
+      roundRect(ctx, 80, 500, 230, 48, 24);
+      ctx.fillStyle = 'white';
+      ctx.font = '700 16px "Noto Sans KR", sans-serif';
+      ctx.fillText('지금 무료로 시작하기', 195, 530);
+    } else if (id === 's2') {
+      ctx.fillStyle = 'white';
+      ctx.font = '900 22px "Noto Sans KR", sans-serif';
+      ctx.fillText('😰 이런 상황', 195, 76);
+      ctx.fillText('겪어본 적 있나요?', 195, 104);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '400 14px sans-serif';
+      ctx.fillText('당신만 그런 게 아닙니다', 195, 128);
+      // items
+      const items = [
+        ['🗺️', '낯선 곳에서 화장실을 몰라 당황했던 순간'],
+        ['✈️', '여행 중 급하게 화장실이 필요한데'],
+        ['👶', '아이 데리고 기저귀 갈 곳을 찾아 헤맬 때']
+      ];
+      items.forEach(([emoji, text], i) => {
+        const y = 388 + i * 80;
+        ctx.fillStyle = 'rgba(255,255,255,0.06)';
+        roundRect(ctx, 20, y - 24, 350, 60, 16);
+        ctx.fillStyle = 'white';
+        ctx.font = '500 13px "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(emoji + '  ' + text, 44, y + 10);
+        ctx.textAlign = 'center';
+      });
+    } else if (id === 's3') {
+      ctx.fillStyle = '#00b896';
+      ctx.font = '900 26px "Noto Sans KR", sans-serif';
+      ctx.fillText('얌이 해결합니다', 195, 76);
+      const feats = ['📍 현위치 기반 즉시 검색','🚻 공공화장실 전국 데이터 보유','♿ 장애인 화장실 전용 필터','👶 기저귀 교환대 있는 곳만 보기','🕐 24시간 운영 화장실 필터'];
+      feats.forEach((f, i) => {
+        const y = 372 + i * 56;
+        ctx.fillStyle = 'rgba(0,184,150,0.08)';
+        roundRect(ctx, 20, y - 18, 350, 46, 14);
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.font = '600 13px "Noto Sans KR", sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(f, 44, y + 10);
+        ctx.textAlign = 'center';
+      });
+    } else if (id === 's4') {
+      ctx.fillStyle = 'white';
+      ctx.font = '900 26px "Noto Sans KR", sans-serif';
+      ctx.fillText('왜 얌인가?', 195, 76);
+      const cards4 = [
+        ['01','⚡ 지도 앱보다 빠르게','화장실 검색 특화 — 3초 안에 결과'],
+        ['02','🏛️ 공공데이터 기반 신뢰성','전국 공공화장실 공식 데이터 연동'],
+        ['03','✨ 직관적인 UI','앱 설치 없이 웹에서 바로 사용'],
+        ['04','🌐 한국어 · 영어 지원','외국인 관광객도 쉽게 사용 가능']
+      ];
+      cards4.forEach(([num, title, desc], i) => {
+        const y = 352 + i * 72;
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        roundRect(ctx, 20, y - 22, 350, 60, 0);
+        ctx.fillStyle = '#00b896';
+        ctx.font = '900 20px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(num, 28, y + 8);
+        ctx.fillStyle = 'white';
+        ctx.font = '700 14px "Noto Sans KR", sans-serif';
+        ctx.fillText(title, 70, y + 4);
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.font = '400 12px sans-serif';
+        ctx.fillText(desc, 70, y + 22);
+        ctx.textAlign = 'center';
+      });
+    } else if (id === 's5') {
+      ctx.fillStyle = 'white';
+      ctx.font = '900 28px "Noto Sans KR", sans-serif';
+      ctx.fillText('지금 바로', 195, 372);
+      ctx.fillText('시작하세요 🎉', 195, 406);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.font = '400 14px sans-serif';
+      ctx.fillText('설치 없이 웹에서 바로 사용', 195, 432);
+      const btnG = ctx.createLinearGradient(80, 455, 310, 495);
+      btnG.addColorStop(0, '#00b896');
+      btnG.addColorStop(1, '#2563eb');
+      ctx.fillStyle = btnG;
+      roundRect(ctx, 80, 455, 230, 52, 26);
+      ctx.fillStyle = 'white';
+      ctx.font = '900 18px "Noto Sans KR", sans-serif';
+      ctx.fillText('얌 시작하기', 195, 488);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.font = '400 12px sans-serif';
+      ctx.fillText('yam-tau.vercel.app', 195, 522);
+    }
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // MediaRecorder 시작
+  const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+    ? 'video/webm;codecs=vp9' : 'video/webm';
+  mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 5_000_000 });
+  mediaRecorder.ondataavailable = e => { if (e.data.size > 0) recordedChunks.push(e.data); };
+  mediaRecorder.onstop = () => {
+    capturing = false;
+    const blob = new Blob(recordedChunks, { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'yam_cardnews.webm';
+    a.click();
+    status.textContent = '✅ 다운로드 완료! (yam_cardnews.webm)';
+    btn.textContent = '🎬 영상 녹화 시작';
+    btn.classList.remove('recording');
+  };
+  mediaRecorder.start(100);
+  renderFrame();
+
+  window._recCapturing = () => { capturing = false; };
+}
+
+function stopRecord() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+  }
+  recTimers.forEach(clearTimeout);
+  recTimers = [];
+  if (window._recCapturing) window._recCapturing();
+}
+
+// touch swipe
+let tx = 0;
+document.getElementById('card-container').addEventListener('touchstart', e => tx = e.touches[0].clientX);
+document.getElementById('card-container').addEventListener('touchend', e => {
+  const dx = tx - e.changedTouches[0].clientX;
+  if (Math.abs(dx) > 40) goTo(current + (dx > 0 ? 1 : -1));
+});
+
+// ───────────────────────────────────────────────
+// HELPER: make renderer for a canvas element
+// ───────────────────────────────────────────────
+function makeRenderer(canvasId, w, h) {
+  const canvas = document.getElementById(canvasId);
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+  renderer.setSize(w, h, false);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  return renderer;
+}
+
+// ───────────────────────────────────────────────
+// BACKGROUND PARTICLE SCENES (shared pattern)
+// ───────────────────────────────────────────────
+function makeBgScene(canvasId, color1, color2) {
+  const canvas = document.getElementById(canvasId);
+  const w = canvas.clientWidth || 390, h = canvas.clientHeight || 693;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(w, h, false);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 100);
+  camera.position.set(0, 0, 8);
+
+  const count = 120;
+  const pos = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  const c1 = new THREE.Color(color1), c2 = new THREE.Color(color2);
+  for (let i = 0; i < count; i++) {
+    pos[i*3]   = (Math.random()-0.5)*14;
+    pos[i*3+1] = (Math.random()-0.5)*20;
+    pos[i*3+2] = (Math.random()-0.5)*6;
+    const t = Math.random();
+    const c = c1.clone().lerp(c2, t);
+    col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({
+    size: 0.12, vertexColors: true, transparent: true, opacity: 0.6
+  }));
+  scene.add(pts);
+
+  let frame = 0;
+  (function loop() {
+    requestAnimationFrame(loop);
+    frame++;
+    pts.rotation.y = frame * 0.001;
+    pts.rotation.x = frame * 0.0005;
+    renderer.render(scene, camera);
+  })();
+}
+
+// Init backgrounds
+makeBgScene('bg1', '#00b896', '#2563eb');
+makeBgScene('bg2', '#9333ea', '#2563eb');
+makeBgScene('bg3', '#00b896', '#059669');
+makeBgScene('bg4', '#1d4ed8', '#0ea5e9');
+makeBgScene('bg5', '#00b896', '#2563eb');
+
+// ───────────────────────────────────────────────
+// SLIDE 1: Floating toilet icon 3D
+// ───────────────────────────────────────────────
+(function slide1() {
+  const renderer = makeRenderer('c1', 260, 220);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, 260/220, 0.1, 100);
+  camera.position.set(0, 0, 7);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const d = new THREE.DirectionalLight(0x00ffcc, 1.2);
+  d.position.set(5, 8, 5);
+  scene.add(d);
+  const d2 = new THREE.DirectionalLight(0x2563eb, 0.5);
+  d2.position.set(-5, -3, 3);
+  scene.add(d2);
+
+  const group = new THREE.Group();
+
+  // Main toilet bowl shape (simplified)
+  function makeBowl() {
+    const g = new THREE.Group();
+    // tank
+    const tankGeo = new THREE.BoxGeometry(1.2, 0.6, 0.5);
+    const mat = new THREE.MeshPhongMaterial({ color: 0x00b896, shininess: 80, specular: 0x88ffdd });
+    const tank = new THREE.Mesh(tankGeo, mat);
+    tank.position.y = 0.55;
+    g.add(tank);
+    // bowl
+    const bowlGeo = new THREE.CylinderGeometry(0.7, 0.5, 0.8, 20);
+    const bowl = new THREE.Mesh(bowlGeo, new THREE.MeshPhongMaterial({ color: 0x00d4aa, shininess: 100, specular: 0xaaffee }));
+    bowl.position.y = -0.1;
+    g.add(bowl);
+    // seat
+    const seatGeo = new THREE.TorusGeometry(0.62, 0.08, 8, 30);
+    const seat = new THREE.Mesh(seatGeo, new THREE.MeshPhongMaterial({ color: 0xffffff, shininess: 60 }));
+    seat.position.y = 0.25;
+    seat.rotation.x = Math.PI/2;
+    g.add(seat);
+    // base
+    const baseGeo = new THREE.CylinderGeometry(0.4, 0.35, 0.4, 16);
+    const base = new THREE.Mesh(baseGeo, new THREE.MeshPhongMaterial({ color: 0x00956e, shininess: 40 }));
+    base.position.y = -0.6;
+    g.add(base);
+    return g;
+  }
+
+  const bowl = makeBowl();
+  bowl.scale.set(1.1, 1.1, 1.1);
+  group.add(bowl);
+
+  // Floating mini orbs around
+  for (let i = 0; i < 8; i++) {
+    const ang = (i/8)*Math.PI*2;
+    const r = 2.2 + Math.sin(i)*0.3;
+    const geo = new THREE.SphereGeometry(0.1 + Math.random()*0.12, 10, 10);
+    const mesh = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({
+      color: i%2===0 ? 0x00b896 : 0x2563eb,
+      emissive: i%2===0 ? 0x005040 : 0x102060,
+      emissiveIntensity: 0.5,
+      shininess: 100
+    }));
+    mesh.position.set(Math.cos(ang)*r, Math.sin(ang)*0.8, Math.sin(ang)*0.5);
+    mesh.userData = { ang, r, oy: mesh.position.y };
+    group.add(mesh);
+  }
+
+  scene.add(group);
+
+  let frame = 0;
+  (function loop() {
+    requestAnimationFrame(loop);
+    frame++;
+    group.rotation.y = Math.sin(frame*0.008)*0.4;
+    bowl.position.y = Math.sin(frame*0.02)*0.12;
+    group.children.slice(1).forEach((m, idx) => {
+      const { ang, r, oy } = m.userData;
+      const t = frame*0.02 + idx;
+      m.position.x = Math.cos(ang + t*0.3)*r;
+      m.position.y = oy + Math.sin(t)*0.3;
+      m.position.z = Math.sin(ang + t*0.3)*0.5;
+    });
+    renderer.render(scene, camera);
+  })();
+})();
+
+// ───────────────────────────────────────────────
+// SLIDE 2: Confused person character
+// ───────────────────────────────────────────────
+(function slide2() {
+  const renderer = makeRenderer('c2', 320, 240);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, 320/240, 0.1, 100);
+  camera.position.set(0, 1, 9);
+  camera.lookAt(0, 0.5, 0);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const d = new THREE.DirectionalLight(0x9333ea, 1.0);
+  d.position.set(5, 8, 5);
+  scene.add(d);
+  const d2 = new THREE.DirectionalLight(0x2563eb, 0.6);
+  d2.position.set(-4, 2, 3);
+  scene.add(d2);
+
+  function makePerson(color = 0x9333ea) {
+    const g = new THREE.Group();
+    // head
+    const head = new THREE.Mesh(
+      new THREE.SphereGeometry(0.5, 20, 20),
+      new THREE.MeshPhongMaterial({ color: 0xffcc99, shininess: 40 })
+    );
+    head.position.y = 2.1;
+    g.add(head);
+    // eyes
+    [-0.18, 0.18].forEach(x => {
+      const eye = new THREE.Mesh(
+        new THREE.SphereGeometry(0.07, 10, 10),
+        new THREE.MeshPhongMaterial({ color: 0x222222 })
+      );
+      eye.position.set(x, 2.15, 0.47);
+      g.add(eye);
+    });
+    // question mark above head
+    const qGeo = new THREE.TorusGeometry(0.2, 0.06, 8, 20, Math.PI*1.5);
+    const q = new THREE.Mesh(qGeo, new THREE.MeshPhongMaterial({ color: 0xf59e0b, emissive: 0x7a4d00, emissiveIntensity: 0.4 }));
+    q.position.set(0.3, 2.8, 0);
+    q.rotation.z = Math.PI/4;
+    g.add(q);
+    const qdot = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 8), new THREE.MeshPhongMaterial({ color: 0xf59e0b }));
+    qdot.position.set(0.45, 2.45, 0);
+    g.add(qdot);
+    // body
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.4, 0.35, 1.0, 16),
+      new THREE.MeshPhongMaterial({ color, shininess: 30 })
+    );
+    body.position.y = 1.1;
+    g.add(body);
+    // arms (raised/confused)
+    [-1, 1].forEach(side => {
+      const arm = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.1, 0.08, 0.8, 10),
+        new THREE.MeshPhongMaterial({ color })
+      );
+      arm.position.set(side * 0.6, 1.35, 0);
+      arm.rotation.z = side * (-Math.PI/3);
+      g.add(arm);
+    });
+    // legs
+    [-0.2, 0.2].forEach(x => {
+      const leg = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.12, 0.1, 0.9, 10),
+        new THREE.MeshPhongMaterial({ color: 0x334155 })
+      );
+      leg.position.set(x, 0.15, 0);
+      g.add(leg);
+    });
+    return g;
+  }
+
+  const person = makePerson(0x9333ea);
+  person.scale.set(0.85, 0.85, 0.85);
+  scene.add(person);
+
+  // exclamation marks floating
+  for (let i = 0; i < 5; i++) {
+    const geo = new THREE.SphereGeometry(0.07, 8, 8);
+    const m = new THREE.Mesh(geo, new THREE.MeshPhongMaterial({ color: 0xf59e0b, emissive: 0x7a4d00, emissiveIntensity: 0.4 }));
+    m.position.set((Math.random()-0.5)*4, 1.5 + Math.random()*2, (Math.random()-0.5)*2);
+    m.userData = { oy: m.position.y, ox: m.position.x, idx: i };
+    scene.add(m);
+  }
+
+  let frame = 0;
+  (function loop() {
+    requestAnimationFrame(loop);
+    frame++;
+    person.rotation.y = Math.sin(frame*0.015)*0.6;
+    person.position.y = Math.sin(frame*0.03)*0.05;
+    scene.children.slice(3).forEach(m => {
+      if (m.userData.oy !== undefined) {
+        m.position.y = m.userData.oy + Math.sin(frame*0.02 + m.userData.idx)*0.3;
+        m.position.x = m.userData.ox + Math.sin(frame*0.03 + m.userData.idx)*0.2;
+      }
+    });
+    renderer.render(scene, camera);
+  })();
+})();
+
+// ───────────────────────────────────────────────
+// SLIDE 3: 3D Smartphone with map UI
+// ───────────────────────────────────────────────
+(function slide3() {
+  const renderer = makeRenderer('c3', 280, 240);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(42, 280/240, 0.1, 100);
+  camera.position.set(0, 0.3, 7);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const d = new THREE.DirectionalLight(0x00ffcc, 1.2);
+  d.position.set(5, 8, 5);
+  scene.add(d);
+
+  // Phone body
+  const phoneGroup = new THREE.Group();
+  const phoneBody = new THREE.Mesh(
+    new THREE.BoxGeometry(2.2, 4, 0.2),
+    new THREE.MeshPhongMaterial({ color: 0x1e293b, shininess: 80, specular: 0x334155 })
+  );
+  phoneGroup.add(phoneBody);
+
+  // Screen
+  const screen = new THREE.Mesh(
+    new THREE.BoxGeometry(1.9, 3.6, 0.05),
+    new THREE.MeshPhongMaterial({ color: 0x00b896, shininess: 30, emissive: 0x004030, emissiveIntensity: 0.3 })
+  );
+  screen.position.z = 0.1;
+  phoneGroup.add(screen);
+
+  // Map grid lines on screen
+  const lineMat = new THREE.LineBasicMaterial({ color: 0x00d4aa, transparent: true, opacity: 0.3 });
+  for (let i = -3; i <= 3; i++) {
+    const hgeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(-0.9, i*0.3, 0.13),
+      new THREE.Vector3(0.9, i*0.3, 0.13)
+    ]);
+    phoneGroup.add(new THREE.Line(hgeo, lineMat));
+    const vgeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(i*0.3, -1.8, 0.13),
+      new THREE.Vector3(i*0.3, 1.8, 0.13)
+    ]);
+    phoneGroup.add(new THREE.Line(vgeo, lineMat));
+  }
+
+  // Location pin on map
+  const pinGroup = new THREE.Group();
+  const pinStem = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.04, 0.04, 0.4, 8),
+    new THREE.MeshPhongMaterial({ color: 0xff4444 })
+  );
+  pinStem.position.y = -0.2;
+  pinGroup.add(pinStem);
+  const pinHead = new THREE.Mesh(
+    new THREE.SphereGeometry(0.12, 12, 12),
+    new THREE.MeshPhongMaterial({ color: 0xff4444, emissive: 0x880000, emissiveIntensity: 0.3 })
+  );
+  pinHead.position.y = 0.05;
+  pinGroup.add(pinHead);
+  pinGroup.position.set(0.1, 0.3, 0.15);
+  phoneGroup.add(pinGroup);
+
+  // Pulse ring around pin
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.15, 0.2, 24),
+    new THREE.MeshBasicMaterial({ color: 0xff4444, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
+  );
+  ring.position.set(0.1, 0.3, 0.15);
+  ring.rotation.x = -0.3;
+  phoneGroup.add(ring);
+
+  // Bathroom location dots
+  const dotColors = [0x00b896, 0x2563eb, 0x00b896, 0x10b981];
+  const dotPositions = [[-0.4, 0.6], [0.5, -0.2], [-0.2, -0.5], [0.4, 0.8]];
+  dotPositions.forEach(([x, y], idx) => {
+    const dot = new THREE.Mesh(
+      new THREE.SphereGeometry(0.07, 10, 10),
+      new THREE.MeshPhongMaterial({ color: dotColors[idx], emissive: dotColors[idx], emissiveIntensity: 0.4 })
+    );
+    dot.position.set(x, y, 0.15);
+    phoneGroup.add(dot);
+  });
+
+  phoneGroup.rotation.y = -0.3;
+  phoneGroup.rotation.x = 0.05;
+  scene.add(phoneGroup);
+
+  let frame = 0;
+  (function loop() {
+    requestAnimationFrame(loop);
+    frame++;
+    phoneGroup.rotation.y = -0.3 + Math.sin(frame*0.01)*0.15;
+    pinGroup.position.y = 0.3 + Math.sin(frame*0.04)*0.08;
+    const s = 1 + Math.sin(frame*0.05)*0.4;
+    ring.scale.set(s, s, 1);
+    ring.material.opacity = 0.5 * (1 - (s-1));
+    renderer.render(scene, camera);
+  })();
+})();
+
+// ───────────────────────────────────────────────
+// SLIDE 4: 3D Infographic — speed, accuracy, filter
+// ───────────────────────────────────────────────
+(function slide4() {
+  const renderer = makeRenderer('c4', 340, 220);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, 340/220, 0.1, 100);
+  camera.position.set(0, 2, 10);
+  camera.lookAt(0, 0, 0);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const d = new THREE.DirectionalLight(0x4aacde, 1.0);
+  d.position.set(5, 10, 5);
+  scene.add(d);
+
+  // Three pillars
+  const pillars = [
+    { x: -3, color: 0x00b896, label: '⚡', h: 2.5 },
+    { x: 0,  color: 0x2563eb, label: '📍', h: 2.0 },
+    { x: 3,  color: 0x10b981, label: '✨', h: 1.8 }
+  ];
+
+  const pillarMeshes = [];
+  pillars.forEach(({ x, color, h }) => {
+    const geo = new THREE.BoxGeometry(1.2, h, 1.2);
+    const mat = new THREE.MeshPhongMaterial({ color, shininess: 60, specular: new THREE.Color(color).multiplyScalar(0.5) });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x, h/2 - 1, 0);
+    mesh.userData = { baseH: h, phase: x };
+    scene.add(mesh);
+    pillarMeshes.push(mesh);
+
+    // top cap glow
+    const capGeo = new THREE.SphereGeometry(0.4, 12, 12);
+    const cap = new THREE.Mesh(capGeo, new THREE.MeshPhongMaterial({
+      color, emissive: color, emissiveIntensity: 0.5, shininess: 100
+    }));
+    cap.position.set(x, h - 0.6, 0);
+    cap.userData = { baseY: h - 0.6, phase: x };
+    scene.add(cap);
+    pillarMeshes.push(cap);
+  });
+
+  // Ground
+  const gnd = new THREE.Mesh(
+    new THREE.BoxGeometry(10, 0.1, 4),
+    new THREE.MeshPhongMaterial({ color: 0x0f172a, shininess: 10 })
+  );
+  gnd.position.y = -1;
+  scene.add(gnd);
+
+  let frame = 0;
+  (function loop() {
+    requestAnimationFrame(loop);
+    frame++;
+    pillarMeshes.forEach(m => {
+      if (m.userData.baseH) {
+        const s = 1 + Math.sin(frame*0.02 + m.userData.phase)*0.04;
+        m.scale.y = s;
+      } else {
+        m.position.y = m.userData.baseY + Math.sin(frame*0.03 + m.userData.phase)*0.15;
+      }
+    });
+    scene.rotation.y = Math.sin(frame*0.008)*0.25;
+    renderer.render(scene, camera);
+  })();
+})();
+
+// ───────────────────────────────────────────────
+// SLIDE 5: Celebration particle burst + YAM logo
+// ───────────────────────────────────────────────
+(function slide5() {
+  const renderer = makeRenderer('c5', 340, 280);
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, 340/280, 0.1, 100);
+  camera.position.set(0, 0, 10);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+  const d = new THREE.DirectionalLight(0x00ffcc, 1.2);
+  d.position.set(5, 8, 5);
+  scene.add(d);
+
+  // Central 얌 text represented by glowing orb cluster
+  const coreGeo = new THREE.SphereGeometry(0.8, 24, 24);
+  const coreMat = new THREE.MeshPhongMaterial({
+    color: 0x00b896, emissive: 0x004030, emissiveIntensity: 0.6,
+    transparent: true, opacity: 0.9, shininess: 100
+  });
+  const core = new THREE.Mesh(coreGeo, coreMat);
+  scene.add(core);
+
+  // Ring
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(1.2, 0.05, 8, 60),
+    new THREE.MeshPhongMaterial({ color: 0x2563eb, emissive: 0x102060, emissiveIntensity: 0.5 })
+  );
+  scene.add(ring);
+
+  // Celebration particles
+  const pCount = 200;
+  const pPos = new Float32Array(pCount * 3);
+  const pCol = new Float32Array(pCount * 3);
+  const pVel = [];
+  const colors5 = [new THREE.Color(0x00b896), new THREE.Color(0x2563eb), new THREE.Color(0xf59e0b), new THREE.Color(0xff4444), new THREE.Color(0x10b981)];
+
+  for (let i = 0; i < pCount; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const elev = (Math.random()-0.5)*Math.PI;
+    const spd = 0.02 + Math.random()*0.04;
+    pVel.push({
+      x: Math.cos(ang)*Math.cos(elev)*spd,
+      y: Math.sin(elev)*spd,
+      z: Math.sin(ang)*Math.cos(elev)*spd,
+      life: Math.random()
+    });
+    pPos[i*3] = 0; pPos[i*3+1] = 0; pPos[i*3+2] = 0;
+    const c = colors5[Math.floor(Math.random()*colors5.length)];
+    pCol[i*3] = c.r; pCol[i*3+1] = c.g; pCol[i*3+2] = c.b;
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
+  const pts = new THREE.Points(pGeo, new THREE.PointsMaterial({
+    size: 0.12, vertexColors: true, transparent: true, opacity: 0.85
+  }));
+  scene.add(pts);
+
+  let frame = 0;
+  (function loop() {
+    requestAnimationFrame(loop);
+    frame++;
+
+    const pos = pts.geometry.attributes.position.array;
+    for (let i = 0; i < pCount; i++) {
+      pVel[i].life += 0.005;
+      if (pVel[i].life > 1) {
+        pVel[i].life = 0;
+        pos[i*3] = 0; pos[i*3+1] = 0; pos[i*3+2] = 0;
+      }
+      pos[i*3]   += pVel[i].x;
+      pos[i*3+1] += pVel[i].y;
+      pos[i*3+2] += pVel[i].z;
+    }
+    pts.geometry.attributes.position.needsUpdate = true;
+
+    const pulse = 1 + Math.sin(frame*0.05)*0.08;
+    core.scale.set(pulse, pulse, pulse);
+    ring.rotation.z = frame*0.01;
+    ring.rotation.x = Math.sin(frame*0.007)*0.3;
+
+    renderer.render(scene, camera);
+  })();
+})();
+</script>
+</body>
+</html>
