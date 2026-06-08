@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>얌 YAM - 4컷 만화</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: #1a1a2e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  padding: 24px 16px;
+  font-family: 'Apple Gothic','Malgun Gothic','맑은 고딕','나눔고딕',sans-serif;
+}
+canvas#comic {
+  width: 100%;
+  max-width: 860px;
+  height: auto;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7);
+  display: block;
+}
+.btn-row {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.btn {
+  padding: 12px 26px;
+  border-radius: 28px;
+  border: 2.5px solid #000;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Apple Gothic','Malgun Gothic','맑은 고딕',sans-serif;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 #000;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: transform .1s, box-shadow .1s;
+}
+.btn:active { transform:translate(2px,2px); box-shadow:1px 1px 0 #000; }
+.btn-save { background:#ffec3d; color:#000; }
+</style>
+</head>
+<body>
+<canvas id="comic" width="860" height="1260"></canvas>
+<div class="btn-row">
+  <button class="btn btn-save" onclick="savePNG()">🖼 PNG 저장</button>
+</div>
+
+<script>
+const CV = document.getElementById('comic');
+const C  = CV.getContext('2d');
+const W = 860, H = 1260;
+const ANDROID_URL = 'https://play.google.com/store/apps/details?id=kr.techcel.yam2';
+
+// 클릭 영역 목록 (링크 연결용)
+const clickZones = [];
+
+document.fonts.ready.then(render);
+
+function render() {
+  C.clearRect(0,0,W,H);
+
+  // 전체 카드 배경
+  const bg = C.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#fef9f0'); bg.addColorStop(1,'#f5ede0');
+  C.fillStyle = bg; C.fillRect(0,0,W,H);
+
+  drawHeader();
+  drawAndroidBanner(); // 상단 다운로드 배너
+
+  // 4컷 배치
+  const gap = 10, marg = 14;
+  const pw = (W - marg*2 - gap) / 2;
+  const ph = 490;
+  const row1y = 250, row2y = row1y + ph + gap;
+
+  drawPanel1(marg,        row1y, pw, ph); // 컷①
+  drawPanel2(marg+pw+gap, row1y, pw, ph); // 컷②
+  drawPanel3(marg,        row2y, pw, ph); // 컷③
+  drawPanel4(marg+pw+gap, row2y, pw, ph); // 컷④
+
+  // 패널 외곽 테두리
+  C.strokeStyle = '#3d2b1f';
+  C.lineWidth = 4;
+  C.strokeRect(marg, row1y, W-marg*2, ph*2+gap);
+  // 가운데 십자
+  C.beginPath(); C.moveTo(marg+pw+gap/2, row1y); C.lineTo(marg+pw+gap/2, row2y+ph); C.stroke();
+  C.beginPath(); C.moveTo(marg, row1y+ph+gap/2); C.lineTo(W-marg, row1y+ph+gap/2); C.stroke();
+
+  drawFooter();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 헤더
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function drawHeader() {
+  // 배경 (지브리풍 따뜻한 하늘색)
+  const g = C.createLinearGradient(0,0,W,130);
+  g.addColorStop(0,'#5ba3d9'); g.addColorStop(0.5,'#7ec8e3'); g.addColorStop(1,'#a8d8ea');
+  C.fillStyle = g;
+  rrFill(0,0,W,130,18);
+
+  // 구름 장식
+  ghibliCloud(80, 45, 70, 28);
+  ghibliCloud(200, 25, 50, 20);
+  ghibliCloud(700, 38, 90, 32);
+  ghibliCloud(780, 18, 55, 22);
+
+  // 로고 텍스트
+  C.save();
+  C.font = 'bold 52px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif';
+  C.textBaseline = 'middle';
+  C.textAlign = 'left';
+  // 텍스트 그림자
+  C.fillStyle = 'rgba(0,0,0,0.25)';
+  C.fillText('얌 YAM', 33, 58);
+  C.fillStyle = '#ffffff';
+  C.fillText('얌 YAM', 30, 55);
+  C.restore();
+
+  // 서브텍스트
+  C.fillStyle = 'rgba(255,255,255,0.92)';
+  C.font = '18px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif';
+  C.textAlign = 'left'; C.textBaseline = 'middle';
+  C.fillText('급할 때 가장 먼저 찾는 화장실 앱', 32, 90);
+
+  // 화장실 배지
+  C.fillStyle = 'rgba(255,255,255,0.92)';
+  rrFill(W-195, 38, 178, 52, 26);
+  C.fillStyle = '#2d6a4f';
+  C.font = 'bold 17px "Apple Gothic","Malgun Gothic",sans-serif';
+  C.textAlign = 'center'; C.textBaseline = 'middle';
+  C.fillText('🚻  내 주변 화장실 앱', W-106, 65);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 안드로이드 다운로드 배너 (상단)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function drawAndroidBanner() {
+  const bx=14, by=140, bw=W-28, bh=98;
+
+  // 배경 (지브리 초록빛 따뜻함)
+  const bg = C.createLinearGradient(bx,by,bx+bw,by);
+  bg.addColorStop(0,'#2d6a4f'); bg.addColorStop(0.5,'#40916c'); bg.addColorStop(1,'#1b4332');
+  C.fillStyle = bg;
+  rrFill(bx,by,bw,bh,14);
+  C.strokeStyle = '#1b4332'; C.lineWidth = 3;
+  rrStroke(bx,by,bw,bh,14,3);
+
+  // 좌측 텍스트
+  C.fillStyle = '#fff';
+  C.font = 'bold 24px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif';
+  C.textAlign = 'left'; C.textBaseline = 'middle';
+  C.fillText('📱 얌(YAM) 안드로이드 앱', bx+22, by+38);
+  C.fillStyle = 'rgba(255,255,255,0.78)';
+  C.font = '15px "Apple Gothic","Malgun Gothic",sans-serif';
+  C.fillText('구글 플레이스토어에서 무료 다운로드', bx+22, by+66);
+
+  // 다운로드 버튼 (우측)
+  const btnX = W-210, btnY = by+18, btnW = 188, btnH = 62;
+  C.fillStyle = 'rgba(255,255,255,0.15)';
+  rrFill(btnX, btnY, btnW, btnH, 12);
+  C.fillStyle = '#ffec3d';
+  rrFill(btnX, btnY, btnW, btnH, 12);
+  C.strokeStyle = '#b8860b'; C.lineWidth = 2.5;
+  rrStroke(btnX, btnY, btnW, btnH, 12, 2.5);
+  C.fillStyle = '#1b4332';
+  C.font = 'bold 17px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif';
+  C.textAlign = 'center'; C.textBaseline = 'middle';
+  C.fillText('▶ 지금 다운로드', btnX+btnW/2, btnY+btnH/2);
+
+  // 클릭 영역 등록
+  clickZones.push({ x:bx, y:by, w:bw, h:bh, url: ANDROID_URL });
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 컷① : 강남역 앞에서 당황
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function drawPanel1(px, py, pw, ph) {
+  C.save();
+  C.beginPath(); C.rect(px,py,pw,ph); C.clip();
+
+  // 하늘
+  const sky = C.createLinearGradient(px,py,px,py+ph*0.55);
+  sky.addColorStop(0,'#87ceeb'); sky.addColorStop(1,'#c9e8f5');
+  C.fillStyle=sky; C.fillRect(px,py,pw,ph);
+
+  // 구름
+  ghibliCloud(px+60,  py+40, 65, 26);
+  ghibliCloud(px+200, py+28, 45, 18);
+  ghibliCloud(px+310, py+55, 55, 22);
+
+  // 강남역 건물들
+  gangnamBuildings(px, py+ph*0.28, pw, ph*0.72);
+
+  // 바닥 (도로)
+  const road = C.createLinearGradient(px,py+ph*0.76,px,py+ph);
+  road.addColorStop(0,'#8d8d8d'); road.addColorStop(1,'#6e6e6e');
+  C.fillStyle=road; C.fillRect(px, py+ph*0.76, pw, ph*0.24);
+
+  // 횡단보도
+  crosswalk(px+pw*0.2, py+ph*0.77, pw*0.6, ph*0.12);
+
+  // 강남역 표지판
+  gangnamSign(px+pw*0.55, py+ph*0.35);
+
+  // 캐릭터 (당황)
+  ghibliChar(px+pw*0.28, py+ph*0.62, 'panic', 0.85);
+
+  // 속도선 (당황 표현)
+  C.globalAlpha=0.4;
+  for(let i=0;i<14;i++){
+    const a=(i/14)*Math.PI*2;
+    const cx2=px+pw*0.28, cy2=py+ph*0.55;
+    C.strokeStyle='#ffd700'; C.lineWidth=1.5;
+    C.beginPath();
+    C.moveTo(cx2+Math.cos(a)*38,cy2+Math.sin(a)*28);
+    C.lineTo(cx2+Math.cos(a)*75,cy2+Math.sin(a)*55);
+    C.stroke();
+  }
+  C.globalAlpha=1;
+
+  // 말풍선
+  speechBubble(px+18, py+14, 185, 78,
+    '아...!!\n화장실이 급한데😱', 'bottom-right', 14);
+
+  // 효과음
+  sfxText(px+pw-14, py+18, '긴급!!', '#e63946', 26, 'right');
+
+  // 패널 번호
+  panelBadge(px+16, py+16, '1');
+
+  C.restore();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 컷② : 지도앱에서 헤매는 장면
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function drawPanel2(px, py, pw, ph) {
+  C.save();
+  C.beginPath(); C.rect(px,py,pw,ph); C.clip();
+
+  // 저녁빛 하늘 (강남 야경 느낌)
+  const sky2 = C.createLinearGradient(px,py,px,py+ph*0.5);
+  sky2.addColorStop(0,'#2c3e6a'); sky2.addColorStop(1,'#5b6fa8');
+  C.fillStyle=sky2; C.fillRect(px,py,pw,ph);
+
+  // 강남 야경 건물
+  gangnamNight(px, py+ph*0.25, pw, ph*0.75);
+
+  // 바닥
+  C.fillStyle='#444'; C.fillRect(px,py+ph*0.78,pw,ph*0.22);
+  // 빛 반사
+  C.fillStyle='rgba(255,200,100,0.15)';
+  C.fillRect(px,py+ph*0.78,pw,ph*0.05);
+
+  // 3D 스마트폰 (크고 선명하게)
+  ghibliPhone(px+pw*0.58, py+ph*0.48, 'error');
+
+  // 캐릭터 (두리번)
+  ghibliChar(px+pw*0.22, py+ph*0.64, 'confused', 0.78);
+
+  // 물음표
+  [
+    [px+pw*0.12, py+ph*0.32, 28, '#ffd166'],
+    [px+pw*0.08, py+ph*0.48, 22, '#e9c46a'],
+    [px+pw*0.15, py+ph*0.62, 18, '#f4a261'],
+  ].forEach(([qx,qy,qs,qc]) => {
+    C.fillStyle=qc;
+    C.font=`bold ${qs}px "Apple Gothic","Malgun Gothic",sans-serif`;
+    C.textAlign='center'; C.textBaseline='middle';
+    C.strokeStyle='rgba(0,0,0,0.4)'; C.lineWidth=2;
+    C.strokeText('?',qx,qy); C.fillText('?',qx,qy);
+  });
+
+  // 말풍선
+  speechBubble(px+pw-200, py+14, 188, 78,
+    '지도앱엔\n화장실이 없잖아!!', 'bottom-left', 13);
+
+  // 두리번 텍스트
+  C.save(); C.translate(px+pw*0.42, py+ph-38); C.rotate(0.12);
+  C.fillStyle='#ffd166';
+  C.font='bold 18px "Apple Gothic","Malgun Gothic",sans-serif';
+  C.textAlign='center';
+  C.strokeStyle='rgba(0,0,0,0.5)'; C.lineWidth=3;
+  C.strokeText('두리번~', 0, 0); C.fillText('두리번~', 0, 0);
+  C.restore();
+
+  panelBadge(px+16, py+16, '2');
+  C.restore();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 컷③ : 얌 발견!
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function drawPanel3(px, py, pw, ph) {
+  C.save();
+  C.beginPath(); C.rect(px,py,pw,ph); C.clip();
+
+  // 따뜻한 낮 하늘
+  const sky3 = C.createLinearGradient(px,py,px,py+ph*0.5);
+  sky3.addColorStop(0,'#74c0fc'); sky3.addColorStop(1,'#b2d9f5');
+  C.fillStyle=sky3; C.fillRect(px,py,pw,ph);
+
+  ghibliCloud(px+40,  py+35, 60, 24);
+  ghibliCloud(px+250, py+22, 42, 17);
+
+  // 강남 거리 (낮)
+  gangnamBuildings(px, py+ph*0.3, pw, ph*0.7);
+
+  // 바닥
+  const road3 = C.createLinearGradient(px,py+ph*0.76,px,py+ph);
+  road3.addColorStop(0,'#8d8d8d'); road3.addColorStop(1,'#6e6e6e');
+  C.fillStyle=road3; C.fillRect(px,py+ph*0.76,pw,ph*0.24);
+  crosswalk(px+pw*0.15, py+ph*0.77, pw*0.5, ph*0.11);
+
+  // 빛나는 효과 (발견!)
+  const glow = C.createRadialGradient(px+pw*0.65,py+ph*0.44,5, px+pw*0.65,py+ph*0.44,130);
+  glow.addColorStop(0,'rgba(255,236,61,0.55)');
+  glow.addColorStop(1,'rgba(255,236,61,0)');
+  C.fillStyle=glow; C.fillRect(px,py,pw,ph);
+
+  // 스마트폰 (얌 지도)
+  ghibliPhone(px+pw*0.64, py+ph*0.47, 'yam');
+
+  // 캐릭터 (놀라며 발견)
+  ghibliChar(px+pw*0.24, py+ph*0.63, 'eureka', 0.82);
+
+  // 빛살
+  C.save(); C.globalAlpha=0.35;
+  for(let i=0;i<10;i++){
+    const a=(i/10)*Math.PI*2;
+    const cx2=px+pw*0.65, cy2=py+ph*0.44;
+    C.strokeStyle='#ffec3d'; C.lineWidth=2;
+    C.beginPath();
+    C.moveTo(cx2+Math.cos(a)*55,cy2+Math.sin(a)*45);
+    C.lineTo(cx2+Math.cos(a)*120,cy2+Math.sin(a)*90);
+    C.stroke();
+  }
+  C.restore();
+
+  // 별 파티클
+  [[px+pw*0.08,py+ph*0.18],[px+pw*0.15,py+ph*0.35],[px+pw*0.1,py+ph*0.52]].forEach(([sx,sy],i)=>{
+    drawStar(sx,sy,10+i*3,'#ffd700');
+  });
+
+  // 발견 효과음
+  sfxText(px+pw-14, py+18, '발견! ✨', '#2d6a4f', 24, 'right');
+
+  // 말풍선 (아래)
+  speechBubble(px+12, py+ph-95, 220, 82,
+    '얌으로 검색하면\n바로 나오잖아! 🎉', 'top-right', 13, '#fffbe6', '#1b4332');
+
+  panelBadge(px+16, py+16, '3');
+  C.restore();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 컷④ : 해결 + 행복
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function drawPanel4(px, py, pw, ph) {
+  C.save();
+  C.beginPath(); C.rect(px,py,pw,ph); C.clip();
+
+  // 노을 하늘 (지브리 황혼)
+  const sky4 = C.createLinearGradient(px,py,px,py+ph*0.55);
+  sky4.addColorStop(0,'#ff8c42'); sky4.addColorStop(0.4,'#ffb347'); sky4.addColorStop(1,'#ffd580');
+  C.fillStyle=sky4; C.fillRect(px,py,pw,ph);
+
+  // 노을 구름
+  ghibliCloud(px+30,  py+30, 80, 30, '#ffcf8b');
+  ghibliCloud(px+240, py+15, 55, 22, '#ffb38a');
+  ghibliCloud(px+310, py+48, 60, 24, '#ffd4a0');
+
+  // 강남 건물 실루엣 (노을)
+  gangnamSilhouette(px, py+ph*0.28, pw, ph*0.72);
+
+  // 바닥
+  C.fillStyle='#4a4a4a'; C.fillRect(px,py+ph*0.78,pw,ph*0.22);
+  crosswalk(px+pw*0.3, py+ph*0.79, pw*0.45, ph*0.1);
+
+  // 방사형 빛 효과
+  const sun = C.createRadialGradient(px+pw*0.5,py+ph*0.35,10, px+pw*0.5,py+ph*0.35,200);
+  sun.addColorStop(0,'rgba(255,255,180,0.4)'); sun.addColorStop(1,'rgba(255,200,80,0)');
+  C.fillStyle=sun; C.fillRect(px,py,pw,ph);
+
+  // 행복한 캐릭터
+  ghibliChar(px+pw*0.36, py+ph*0.62, 'happy', 0.9);
+
+  // 체크 원
+  C.strokeStyle='#fff'; C.lineWidth=4;
+  C.beginPath(); C.arc(px+pw*0.36, py+ph*0.62-95, 22,0,Math.PI*2); C.stroke();
+  C.fillStyle='#40916c';
+  C.beginPath(); C.arc(px+pw*0.36, py+ph*0.62-95, 22,0,Math.PI*2); C.fill();
+  C.fillStyle='#fff';
+  C.font='bold 24px sans-serif';
+  C.textAlign='center'; C.textBaseline='middle';
+  C.fillText('✓', px+pw*0.36, py+ph*0.62-95);
+
+  // 파티클
+  const pc=['#ff6b6b','#ffd166','#06d6a0','#118ab2','#ef476f','#ffc8dd'];
+  [[px+pw-55,py+80],[px+pw-28,py+155],[px+pw-68,py+215],
+   [px+pw-38,py+280],[px+58,py+100],[px+42,py+182]].forEach(([sx,sy],i)=>{
+    ghibliSparkle(sx,sy,pc[i%pc.length],i);
+  });
+
+  // 해결! 효과음
+  sfxText(px+pw-14, py+18, '해결! 🎉', '#1b4332', 28, 'right');
+
+  // 얌 앱 아이콘 (우측)
+  yamIcon(px+pw-90, py+ph*0.28-40, 78);
+
+  // 말풍선
+  speechBubble(px+10, py+ph-100, 228, 82,
+    '얌 하나면\n어디서든 OK! 💪', 'top-right', 13, '#d8f3dc', '#1b4332');
+
+  // 안드로이드 다운로드 버튼 (컷④ 내부 하단)
+  const btnX=px+pw/2-110, btnY=py+ph-46;
+  const btnW=220, btnH=38;
+  const bg4=C.createLinearGradient(btnX,btnY,btnX+btnW,btnY);
+  bg4.addColorStop(0,'#40916c'); bg4.addColorStop(1,'#1b4332');
+  C.fillStyle=bg4; rrFill(btnX,btnY,btnW,btnH,19);
+  C.strokeStyle='#0d2b1d'; C.lineWidth=2; rrStroke(btnX,btnY,btnW,btnH,19,2);
+  C.fillStyle='#fff';
+  C.font='bold 14px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif';
+  C.textAlign='center'; C.textBaseline='middle';
+  C.fillText('📱 안드로이드 다운로드', btnX+btnW/2, btnY+btnH/2);
+  clickZones.push({ x:px+btnX, y:py+btnY, w:btnW, h:btnH, url:ANDROID_URL });
+
+  panelBadge(px+16, py+16, '4');
+  C.restore();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 푸터
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function drawFooter() {
+  C.fillStyle='#3d2b1f';
+  C.fillRect(0,H-36,W,36);
+  C.fillStyle='#c8a97e';
+  C.font='14px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif';
+  C.textAlign='center'; C.textBaseline='middle';
+  C.fillText('yam-tau.vercel.app  ·  무료 · 설치 없음 · 구글 플레이스토어', W/2, H-18);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 지브리 캐릭터
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function ghibliChar(cx, cy, mood, scale) {
+  C.save();
+  C.translate(cx, cy);
+  C.scale(scale, scale);
+
+  // 그림자
+  C.fillStyle='rgba(0,0,0,0.18)';
+  C.beginPath(); C.ellipse(0,90,42,11,0,0,Math.PI*2); C.fill();
+
+  const bodyColor = mood==='happy' ? '#52b788' : '#f4a261';
+  const bodyDark  = mood==='happy' ? '#2d6a4f' : '#d4721f';
+
+  // 다리
+  [-18,18].forEach((dx,i)=>{
+    const angle = mood==='panic' ? (i===0?-0.25:0.25) : (mood==='happy' ? (i===0?-0.18:0.18) : 0);
+    C.save(); C.translate(dx,60); C.rotate(angle);
+    const lg = C.createLinearGradient(-10,0,10,52);
+    lg.addColorStop(0,'#5a6e8c'); lg.addColorStop(1,'#3a4d66');
+    C.fillStyle=lg;
+    C.beginPath(); C.roundRect(-10,0,20,52,6); C.fill();
+    C.strokeStyle='#2a3a50'; C.lineWidth=2;
+    C.beginPath(); C.roundRect(-10,0,20,52,6); C.stroke();
+    // 신발
+    C.fillStyle='#2a2a2a';
+    C.beginPath(); C.ellipse(0,54,15,8,0,0,Math.PI*2); C.fill();
+    C.restore();
+  });
+
+  // 팔
+  const armAngles = mood==='panic'   ? [[-115,65],[-65,65]] :
+                    mood==='happy'   ? [[-140,68],[-40,68]] :
+                    mood==='eureka'  ? [[-160,62],[-20,62]] :
+                                       [[-105,65],[-75,65]];
+  [[-45,-10],[45,-10]].forEach(([dx,dy],i)=>{
+    C.save(); C.translate(dx,dy);
+    C.rotate(armAngles[i][0]*Math.PI/180);
+    const ag=C.createLinearGradient(-8,0,8,armAngles[i][1]);
+    ag.addColorStop(0,lighten(bodyColor,25)); ag.addColorStop(1,bodyDark);
+    C.fillStyle=ag;
+    C.beginPath(); C.roundRect(-8,0,16,armAngles[i][1],6); C.fill();
+    C.strokeStyle=bodyDark; C.lineWidth=2;
+    C.beginPath(); C.roundRect(-8,0,16,armAngles[i][1],6); C.stroke();
+    C.restore();
+  });
+
+  // 몸통
+  const bg=C.createRadialGradient(-16,-14,4, 0,0,52);
+  bg.addColorStop(0,lighten(bodyColor,38)); bg.addColorStop(0.6,bodyColor); bg.addColorStop(1,bodyDark);
+  C.fillStyle=bg;
+  C.beginPath(); C.ellipse(0,0,50,58,0,0,Math.PI*2); C.fill();
+  C.strokeStyle=bodyDark; C.lineWidth=3;
+  C.beginPath(); C.ellipse(0,0,50,58,0,0,Math.PI*2); C.stroke();
+
+  // 얼굴 (지브리풍 둥글고 귀여운)
+  const fg=C.createRadialGradient(-14,-20,4, 0,-28,46);
+  fg.addColorStop(0,'#ffeac2'); fg.addColorStop(0.7,'#ffcc88'); fg.addColorStop(1,'#d4904a');
+  C.fillStyle=fg;
+  C.beginPath(); C.arc(0,-72,44,0,Math.PI*2); C.fill();
+  C.strokeStyle='#c47a2a'; C.lineWidth=3;
+  C.beginPath(); C.arc(0,-72,44,0,Math.PI*2); C.stroke();
+
+  // 눈
+  if(mood==='panic' || mood==='confused') {
+    // 흰자
+    [-16,16].forEach(dx=>{
+      C.fillStyle='#fff';
+      C.beginPath(); C.ellipse(dx,-68,10,12,0,0,Math.PI*2); C.fill();
+      C.strokeStyle='#c47a2a'; C.lineWidth=1.5;
+      C.beginPath(); C.ellipse(dx,-68,10,12,0,0,Math.PI*2); C.stroke();
+      // 눈동자
+      C.fillStyle='#1a1a2e';
+      C.beginPath(); C.arc(dx,-67,6,0,Math.PI*2); C.fill();
+      // 하이라이트
+      C.fillStyle='#fff';
+      C.beginPath(); C.arc(dx+3,-70,2.5,0,Math.PI*2); C.fill();
+    });
+    // 입 (동그란 O)
+    C.strokeStyle='#884400'; C.lineWidth=2.5;
+    C.beginPath(); C.arc(0,-54,8,0,Math.PI*2); C.stroke();
+    // 볼 빨개짐
+    C.fillStyle='rgba(255,80,80,0.32)';
+    C.beginPath(); C.ellipse(-22,-60,12,8,0,0,Math.PI*2); C.fill();
+    C.beginPath(); C.ellipse(22,-60,12,8,0,0,Math.PI*2); C.fill();
+    // 눈썹 (찌푸림)
+    C.strokeStyle='#7a3d00'; C.lineWidth=3; C.lineCap='round';
+    C.beginPath(); C.moveTo(-26,-84); C.quadraticCurveTo(-14,-92,-3,-85); C.stroke();
+    C.beginPath(); C.moveTo(3,-85); C.quadraticCurveTo(14,-92,26,-84); C.stroke();
+  } else {
+    // 행복/유레카 눈 (^^ 호눈)
+    [-16,16].forEach(dx=>{
+      C.strokeStyle='#3a2000'; C.lineWidth=3.5; C.lineCap='round';
+      C.beginPath(); C.arc(dx,-70,10,Math.PI*1.12,Math.PI*1.88); C.stroke();
+    });
+    // 웃는 입
+    C.strokeStyle='#884400'; C.lineWidth=3; C.lineCap='round';
+    C.beginPath(); C.arc(0,-54,17,0.1,Math.PI-0.1); C.stroke();
+    // 볼 핑크 (지브리 특징)
+    C.fillStyle='rgba(255,140,160,0.5)';
+    C.beginPath(); C.ellipse(-23,-58,13,9,0,0,Math.PI*2); C.fill();
+    C.beginPath(); C.ellipse(23,-58,13,9,0,0,Math.PI*2); C.fill();
+    // 눈썹 (편안)
+    C.strokeStyle='#7a3d00'; C.lineWidth=3; C.lineCap='round';
+    C.beginPath(); C.moveTo(-26,-85); C.quadraticCurveTo(-14,-90,-3,-85); C.stroke();
+    C.beginPath(); C.moveTo(3,-85); C.quadraticCurveTo(14,-90,26,-85); C.stroke();
+  }
+
+  // 유레카: 전구 효과
+  if(mood==='eureka') {
+    C.fillStyle='#ffd700';
+    C.beginPath(); C.arc(0,-120,14,0,Math.PI*2); C.fill();
+    C.strokeStyle='#cc9900'; C.lineWidth=2;
+    C.beginPath(); C.arc(0,-120,14,0,Math.PI*2); C.stroke();
+    C.fillStyle='#fff';
+    C.font='bold 16px sans-serif';
+    C.textAlign='center'; C.textBaseline='middle';
+    C.fillText('!', 0,-120);
+  }
+
+  C.restore();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 지브리풍 스마트폰
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function ghibliPhone(cx, cy, mode) {
+  C.save();
+  C.translate(cx, cy);
+
+  const pw2=116, ph2=210, hw=pw2/2, hh=ph2/2;
+  const d=pw2*0.2, t=-16;
+
+  // 그림자
+  C.fillStyle='rgba(0,0,0,0.2)';
+  C.beginPath(); C.ellipse(d/2,hh+14,hw*0.9,12,0,0,Math.PI*2); C.fill();
+
+  // 측면
+  C.fillStyle='#334155';
+  C.beginPath();
+  C.moveTo(hw,-hh); C.lineTo(hw+d,-hh+t); C.lineTo(hw+d,hh+t); C.lineTo(hw,hh);
+  C.closePath(); C.fill();
+  C.strokeStyle='#1e293b'; C.lineWidth=2; C.stroke();
+
+  // 상단면
+  C.fillStyle='#475569';
+  C.beginPath();
+  C.moveTo(-hw,-hh); C.lineTo(hw,-hh); C.lineTo(hw+d,-hh+t); C.lineTo(-hw+d,-hh+t);
+  C.closePath(); C.fill();
+  C.strokeStyle='#1e293b'; C.lineWidth=2; C.stroke();
+
+  // 앞면
+  const phoneGrad = C.createLinearGradient(-hw,-hh,hw,hh);
+  phoneGrad.addColorStop(0,'#1e293b'); phoneGrad.addColorStop(1,'#0f172a');
+  C.fillStyle=phoneGrad;
+  C.beginPath(); C.roundRect(-hw,-hh,pw2,ph2,14); C.fill();
+  C.strokeStyle='#334155'; C.lineWidth=3;
+  C.beginPath(); C.roundRect(-hw,-hh,pw2,ph2,14); C.stroke();
+
+  // 카메라
+  C.fillStyle='#334155';
+  C.beginPath(); C.arc(0,-hh+14,7,0,Math.PI*2); C.fill();
+  C.fillStyle='#1a1a2e';
+  C.beginPath(); C.arc(0,-hh+14,4,0,Math.PI*2); C.fill();
+
+  // 화면 영역 클립
+  C.save();
+  C.beginPath(); C.roundRect(-hw+6,-hh+28,pw2-12,ph2-36,8); C.clip();
+
+  if(mode==='error') {
+    // 오류 화면 (지도앱 X)
+    C.fillStyle='#fffbe8'; C.fillRect(-hw+6,-hh+28,pw2-12,ph2-36);
+    // 격자
+    C.strokeStyle='#d4c89a'; C.lineWidth=1;
+    for(let i=-5;i<=5;i++){
+      C.beginPath(); C.moveTo(-hw+6,i*20); C.lineTo(hw-6,i*20); C.stroke();
+      C.beginPath(); C.moveTo(i*14,-hh+28); C.lineTo(i*14,hh-8); C.stroke();
+    }
+    // X 마크
+    C.strokeStyle='#e63946'; C.lineWidth=11; C.lineCap='round';
+    C.beginPath(); C.moveTo(-26,-26); C.lineTo(26,26); C.stroke();
+    C.beginPath(); C.moveTo(26,-26); C.lineTo(-26,26); C.stroke();
+    C.strokeStyle='#e63946'; C.lineWidth=5;
+    C.beginPath(); C.arc(0,0,36,0,Math.PI*2); C.stroke();
+    // 텍스트
+    C.fillStyle='#cc3333';
+    C.font='bold 11px "Apple Gothic","Malgun Gothic",sans-serif';
+    C.textAlign='center'; C.textBaseline='middle';
+    C.fillText('화장실 없음', 0, 60);
+  } else {
+    // 얌 지도 화면
+    const mapBg=C.createLinearGradient(-50,-90,50,90);
+    mapBg.addColorStop(0,'#d8f3dc'); mapBg.addColorStop(1,'#b7e4c7');
+    C.fillStyle=mapBg; C.fillRect(-hw+6,-hh+28,pw2-12,ph2-36);
+
+    // 격자
+    C.strokeStyle='rgba(0,120,80,0.2)'; C.lineWidth=1;
+    for(let i=-5;i<=5;i++){
+      C.beginPath(); C.moveTo(-50,i*20); C.lineTo(50,i*20); C.stroke();
+      C.beginPath(); C.moveTo(i*14,-90); C.lineTo(i*14,90); C.stroke();
+    }
+
+    // 위치 핀 (지브리풍, 크고 귀여운)
+    // 핀 광채
+    const pinGlow=C.createRadialGradient(5,-15,3, 5,-15,30);
+    pinGlow.addColorStop(0,'rgba(230,57,70,0.3)'); pinGlow.addColorStop(1,'rgba(230,57,70,0)');
+    C.fillStyle=pinGlow; C.beginPath(); C.arc(5,-15,30,0,Math.PI*2); C.fill();
+    // 핀 원
+    C.fillStyle='#e63946';
+    C.beginPath(); C.arc(5,-20,16,0,Math.PI*2); C.fill();
+    C.fillStyle='#fff';
+    C.beginPath(); C.arc(5,-20,8,0,Math.PI*2); C.fill();
+    // 꼬리
+    C.fillStyle='#e63946';
+    C.beginPath(); C.moveTo(-2,-6); C.lineTo(12,-6); C.lineTo(5,10); C.closePath(); C.fill();
+
+    // 펄스 링
+    [22,34,46].forEach((r,i)=>{
+      C.strokeStyle=`rgba(40,167,69,${0.55-i*0.15})`; C.lineWidth=2;
+      C.beginPath(); C.arc(5,-18,r,0,Math.PI*2); C.stroke();
+    });
+
+    // 주변 화장실 마커 (귀여운)
+    [[-32,30],[36,-42],[-18,-58],[38,25]].forEach(([mx,my])=>{
+      C.fillStyle='#40916c';
+      C.beginPath(); C.arc(mx,my,8,0,Math.PI*2); C.fill();
+      C.fillStyle='#fff';
+      C.font='bold 9px sans-serif';
+      C.textAlign='center'; C.textBaseline='middle';
+      C.fillText('🚻',mx,my);
+    });
+
+    // 상단 검색바
+    C.fillStyle='rgba(255,255,255,0.92)';
+    rrFill(-44,-83,88,20,8);
+    C.fillStyle='#2d6a4f';
+    C.font='bold 9px "Apple Gothic","Malgun Gothic",sans-serif';
+    C.textAlign='center'; C.textBaseline='middle';
+    C.fillText('📍 내 주변 화장실', 0,-73);
+
+    // 얌 워터마크
+    C.fillStyle='rgba(45,106,79,0.7)';
+    C.font='bold 13px "Apple Gothic","Malgun Gothic",sans-serif';
+    C.textAlign='center'; C.textBaseline='middle';
+    C.fillText('얌 YAM', 0,72);
+  }
+
+  C.restore(); // 클립 해제
+  C.restore();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 강남 건물들 (낮)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function gangnamBuildings(px, py, pw, ph) {
+  const ground = py;
+  // 건물 배열 (지브리풍 부드러운 색상)
+  const buildings = [
+    { x:0.0,  w:0.12, h:0.62, col:'#8fa8c8', win:'#d4e8ff', label:'' },
+    { x:0.11, w:0.10, h:0.82, col:'#7a9ab8', win:'#c8dcf0', label:'강남빌딩' },
+    { x:0.20, w:0.14, h:0.55, col:'#9eb5cc', win:'#ddeeff', label:'' },
+    { x:0.33, w:0.12, h:0.90, col:'#6a8aaa', win:'#bedfff', label:'COEX' },
+    { x:0.44, w:0.11, h:0.60, col:'#8ba0b8', win:'#d0e4f4', label:'' },
+    { x:0.54, w:0.10, h:0.75, col:'#7595b0', win:'#c4d8ec', label:'' },
+    { x:0.63, w:0.14, h:0.50, col:'#a0b5c8', win:'#e0eeff', label:'' },
+    { x:0.76, w:0.12, h:0.85, col:'#6888a5', win:'#bcd8f0', label:'타워팰리스' },
+    { x:0.87, w:0.13, h:0.65, col:'#8ea8c0', win:'#d2e6f8', label:'' },
+  ];
+
+  buildings.forEach(b => {
+    const bx=px+b.x*pw, bw=b.w*pw, bh=b.h*ph;
+    const by=ground+ph-bh;
+    // 건물 그림자
+    C.fillStyle='rgba(0,0,0,0.12)';
+    C.fillRect(bx+4,by+4,bw,bh);
+    // 건물 본체 (그라디언트)
+    const bg=C.createLinearGradient(bx,by,bx+bw,by);
+    bg.addColorStop(0,lighten(b.col,18)); bg.addColorStop(1,b.col);
+    C.fillStyle=bg; C.fillRect(bx,by,bw,bh);
+    C.strokeStyle=darken(b.col,20); C.lineWidth=1.5;
+    C.strokeRect(bx,by,bw,bh);
+    // 창문
+    const wCols=Math.max(2,Math.floor(bw/18));
+    const wRows=Math.max(2,Math.floor(bh/22));
+    const wx=bw/wCols, wy=bh/wRows;
+    for(let r=0;r<wRows;r++) for(let c=0;c<wCols;c++){
+      if(Math.random()<0.15) continue;
+      C.fillStyle=Math.random()<0.15 ? '#ffe08a' : b.win;
+      C.fillRect(bx+c*wx+wx*0.2, by+r*wy+wy*0.2, wx*0.55, wy*0.55);
+    }
+    // 이름
+    if(b.label){
+      C.fillStyle='rgba(255,255,255,0.85)';
+      C.font='bold 9px "Apple Gothic","Malgun Gothic",sans-serif';
+      C.textAlign='center'; C.textBaseline='bottom';
+      C.fillText(b.label, bx+bw/2, ground+ph-2);
+    }
+  });
+
+  // 나무
+  ghibliTree(px+pw*0.16, ground+ph-8, 28);
+  ghibliTree(px+pw*0.5,  ground+ph-8, 32);
+  ghibliTree(px+pw*0.78, ground+ph-8, 25);
+}
+
+// 강남 야경
+function gangnamNight(px, py, pw, ph) {
+  const ground=py;
+  const buildings=[
+    {x:0.0, w:0.13, h:0.70, col:'#1a2540'},{x:0.12, w:0.11, h:0.88, col:'#1e2d50'},
+    {x:0.22, w:0.14, h:0.60, col:'#162035'},{x:0.35, w:0.12, h:0.95, col:'#192845'},
+    {x:0.46, w:0.11, h:0.65, col:'#1c2a48'},{x:0.56, w:0.12, h:0.78, col:'#18243e'},
+    {x:0.67, w:0.14, h:0.55, col:'#1e2c4c'},{x:0.80, w:0.11, h:0.88, col:'#162040'},
+    {x:0.90, w:0.10, h:0.70, col:'#1a2844'},
+  ];
+  buildings.forEach(b=>{
+    const bx=px+b.x*pw, bw=b.w*pw, bh=b.h*ph;
+    const by=ground+ph-bh;
+    C.fillStyle=b.col; C.fillRect(bx,by,bw,bh);
+    C.strokeStyle='#0a1228'; C.lineWidth=1; C.strokeRect(bx,by,bw,bh);
+    // 노란 불빛 창문
+    const wCols=Math.max(2,Math.floor(bw/16)), wRows=Math.max(2,Math.floor(bh/20));
+    const wx=bw/wCols, wy=bh/wRows;
+    for(let r=0;r<wRows;r++) for(let c=0;c<wCols;c++){
+      if(Math.random()<0.35) continue;
+      C.fillStyle=Math.random()<0.3?'#ffe08a':'rgba(255,220,100,0.5)';
+      C.fillRect(bx+c*wx+wx*0.22,by+r*wy+wy*0.22,wx*0.5,wy*0.5);
+    }
+  });
+  C.fillStyle='#2c3e6a'; C.fillRect(px,py+ph*0.8,pw,ph*0.2);
+  // 도로 불빛 반사
+  C.fillStyle='rgba(255,200,80,0.1)'; C.fillRect(px,py+ph*0.82,pw,ph*0.06);
+}
+
+// 강남 실루엣 (노을)
+function gangnamSilhouette(px, py, pw, ph) {
+  const heights=[0.60,0.82,0.55,0.92,0.64,0.76,0.52,0.88,0.68];
+  heights.forEach((h,i)=>{
+    const bx=px+i*(pw/9), bw=pw/9+2, bh=h*ph, by=py+ph-bh;
+    C.fillStyle='#2d1a0e';
+    C.fillRect(bx,by,bw,bh);
+    // 창문 (주황 빛)
+    const wCols=Math.max(2,Math.floor(bw/16)), wRows=Math.max(2,Math.floor(bh/20));
+    const wx=bw/wCols, wy=bh/wRows;
+    for(let r=0;r<wRows;r++) for(let c=0;c<wCols;c++){
+      if(Math.random()<0.5) continue;
+      C.fillStyle=`rgba(255,${160+Math.random()*60},${50+Math.random()*40},0.6)`;
+      C.fillRect(bx+c*wx+wx*0.22,by+r*wy+wy*0.22,wx*0.5,wy*0.5);
+    }
+  });
+  ghibliTree(px+pw*0.14, py+ph-6, 28);
+  ghibliTree(px+pw*0.52, py+ph-6, 34);
+  ghibliTree(px+pw*0.79, py+ph-6, 26);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 지브리 소품들
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function ghibliCloud(cx, cy, rx, ry, color) {
+  color = color || '#fff';
+  C.fillStyle = color;
+  C.globalAlpha = 0.9;
+  [[-rx*0.5,ry*0.1,ry*0.75],[0,-ry*0.15,ry],[rx*0.45,ry*0.05,ry*0.8],[-rx*0.22,ry*0.22,ry*0.65],[rx*0.2,ry*0.2,ry*0.7]].forEach(([dx,dy,r])=>{
+    C.beginPath(); C.arc(cx+dx,cy+dy,r,0,Math.PI*2); C.fill();
+  });
+  C.globalAlpha = 1;
+}
+
+function ghibliTree(cx, cy, r) {
+  // 나무 기둥
+  C.fillStyle='#6b4c2a';
+  C.fillRect(cx-r*0.15, cy-r*0.6, r*0.3, r*0.6);
+  // 나무 잎 (지브리풍 둥글둥글)
+  const treeColors=['#52b788','#40916c','#74c69d','#2d6a4f'];
+  [
+    [0,-r*1.1,r],[r*0.35,-r*0.65,r*0.75],[-r*0.35,-r*0.65,r*0.75],
+    [0,-r*0.5,r*0.85],[r*0.2,-r*0.2,r*0.65],[-r*0.2,-r*0.2,r*0.65],
+  ].forEach(([dx,dy,cr],i)=>{
+    C.fillStyle=treeColors[i%treeColors.length];
+    C.beginPath(); C.arc(cx+dx,cy+dy,cr,0,Math.PI*2); C.fill();
+  });
+}
+
+function gangnamSign(x, y) {
+  // 강남역 표지판
+  C.fillStyle='#1a6fb5';
+  rrFill(x-52,y-18,104,36,6);
+  C.strokeStyle='#0d4a82'; C.lineWidth=2;
+  rrStroke(x-52,y-18,104,36,6,2);
+  C.fillStyle='#fff';
+  C.font='bold 16px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif';
+  C.textAlign='center'; C.textBaseline='middle';
+  C.fillText('2 강남역 Gangnam', x, y+1);
+  // 기둥
+  C.fillStyle='#888'; C.fillRect(x-4,y+18,8,32);
+}
+
+function crosswalk(x, y, w, h) {
+  C.fillStyle='rgba(255,255,255,0.65)';
+  const stripes=7, sw=w/stripes;
+  for(let i=0;i<stripes;i+=2)
+    C.fillRect(x+i*sw, y, sw*0.85, h);
+}
+
+function yamIcon(lx, ly, s) {
+  // 3D 큐브 (얌)
+  const d=s*0.22;
+  C.fillStyle='#1b4332';
+  C.beginPath();
+  C.moveTo(lx,ly+s); C.lineTo(lx+d,ly+s+d*0.5); C.lineTo(lx+s+d,ly+s+d*0.5); C.lineTo(lx+s,ly+s);
+  C.closePath(); C.fill();
+  C.fillStyle='#2d6a4f';
+  C.beginPath();
+  C.moveTo(lx+s,ly); C.lineTo(lx+s+d,ly+d*0.5); C.lineTo(lx+s+d,ly+s+d*0.5); C.lineTo(lx+s,ly+s);
+  C.closePath(); C.fill();
+  const ig=C.createLinearGradient(lx,ly,lx+s,ly+s);
+  ig.addColorStop(0,'#52b788'); ig.addColorStop(1,'#40916c');
+  C.fillStyle=ig; C.fillRect(lx,ly,s,s);
+  C.strokeStyle='#1b4332'; C.lineWidth=2.5; C.strokeRect(lx,ly,s,s);
+  C.fillStyle='#fff';
+  C.font=`bold ${s*0.42}px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif`;
+  C.textAlign='center'; C.textBaseline='middle';
+  C.shadowColor='rgba(0,0,0,0.25)'; C.shadowBlur=4;
+  C.fillText('얌', lx+s/2, ly+s/2);
+  C.shadowBlur=0;
+}
+
+function ghibliSparkle(x, y, color, idx) {
+  C.save(); C.translate(x,y); C.rotate(idx*0.72);
+  C.fillStyle=color; C.strokeStyle='rgba(0,0,0,0.2)'; C.lineWidth=1.5;
+  C.beginPath();
+  for(let i=0;i<5;i++){
+    const a=(i*4*Math.PI/5)-Math.PI/2, b=((i*4+2)*Math.PI/5)-Math.PI/2;
+    i===0?C.moveTo(16*Math.cos(a),16*Math.sin(a)):C.lineTo(16*Math.cos(a),16*Math.sin(a));
+    C.lineTo(6*Math.cos(b),6*Math.sin(b));
+  }
+  C.closePath(); C.fill(); C.stroke();
+  C.restore();
+}
+
+function drawStar(cx, cy, r, color) {
+  C.save(); C.fillStyle=color; C.strokeStyle='#996600'; C.lineWidth=1.5;
+  C.beginPath();
+  for(let i=0;i<5;i++){
+    const a=(i*4*Math.PI/5)-Math.PI/2, b=((i*4+2)*Math.PI/5)-Math.PI/2;
+    i===0?C.moveTo(cx+r*Math.cos(a),cy+r*Math.sin(a)):C.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));
+    C.lineTo(cx+r*0.4*Math.cos(b),cy+r*0.4*Math.sin(b));
+  }
+  C.closePath(); C.fill(); C.stroke(); C.restore();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// UI 컴포넌트
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function speechBubble(bx, by, bw, bh, text, tail, fs, bg, fg) {
+  bg=bg||'#fffef0'; fg=fg||'#1a1a2e';
+  // 그림자
+  C.fillStyle='rgba(0,0,0,0.18)';
+  C.save(); C.translate(3,3);
+  rrFill(bx,by,bw,bh,16); C.restore();
+  // 본체
+  C.fillStyle=bg; rrFill(bx,by,bw,bh,16);
+  C.strokeStyle='#3d2b1f'; C.lineWidth=2.5; rrStroke(bx,by,bw,bh,16,2.5);
+  // 꼬리
+  const tw=16, th=16;
+  C.fillStyle=bg; C.strokeStyle='#3d2b1f'; C.lineWidth=2.5;
+  if(tail==='bottom-right'){
+    const tx=bx+bw-36,ty=by+bh;
+    C.beginPath(); C.moveTo(tx,ty); C.lineTo(tx+tw,ty+th); C.lineTo(tx-tw*0.3,ty); C.closePath(); C.fill(); C.stroke();
+  } else if(tail==='bottom-left'){
+    const tx=bx+36,ty=by+bh;
+    C.beginPath(); C.moveTo(tx,ty); C.lineTo(tx-tw,ty+th); C.lineTo(tx+tw*0.3,ty); C.closePath(); C.fill(); C.stroke();
+  } else if(tail==='top-right'){
+    const tx=bx+bw-36,ty=by;
+    C.beginPath(); C.moveTo(tx,ty); C.lineTo(tx+tw,ty-th); C.lineTo(tx-tw*0.3,ty); C.closePath(); C.fill(); C.stroke();
+  }
+  // 텍스트
+  C.fillStyle=fg;
+  C.font=`bold ${fs||14}px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif`;
+  C.textAlign='center'; C.textBaseline='middle';
+  const lines=text.split('\n'), lh=(fs||14)+7;
+  const sy=by+bh/2-((lines.length-1)*lh)/2;
+  lines.forEach((l,i)=>C.fillText(l,bx+bw/2,sy+i*lh));
+}
+
+function sfxText(x, y, text, color, size, align) {
+  C.save(); C.translate(x,y);
+  C.rotate(align==='right'?-0.1:0.1);
+  C.font=`bold ${size}px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif`;
+  C.textAlign=align||'left'; C.textBaseline='top';
+  C.strokeStyle='rgba(255,255,255,0.9)'; C.lineWidth=5; C.lineJoin='round';
+  C.strokeText(text,0,0);
+  C.fillStyle=color; C.fillText(text,0,0);
+  C.strokeStyle='rgba(0,0,0,0.3)'; C.lineWidth=1.5; C.strokeText(text,0,0);
+  C.restore();
+}
+
+function panelBadge(x, y, n) {
+  C.fillStyle='rgba(61,43,31,0.85)';
+  C.beginPath(); C.arc(x+15,y+15,17,0,Math.PI*2); C.fill();
+  C.fillStyle='#f4e4c1';
+  C.font='bold 19px "Apple Gothic","Malgun Gothic","맑은 고딕",sans-serif';
+  C.textAlign='center'; C.textBaseline='middle';
+  C.fillText(n,x+15,y+15);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 유틸
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function rrFill(x,y,w,h,r){
+  C.beginPath(); C.moveTo(x+r,y);
+  C.arcTo(x+w,y,x+w,y+h,r); C.arcTo(x+w,y+h,x,y+h,r);
+  C.arcTo(x,y+h,x,y,r); C.arcTo(x,y,x+r,y,r);
+  C.closePath(); C.fill();
+}
+function rrStroke(x,y,w,h,r,lw){
+  C.lineWidth=lw||3;
+  C.beginPath(); C.moveTo(x+r,y);
+  C.arcTo(x+w,y,x+w,y+h,r); C.arcTo(x+w,y+h,x,y+h,r);
+  C.arcTo(x,y+h,x,y,r); C.arcTo(x,y,x+r,y,r);
+  C.closePath(); C.stroke();
+}
+function lighten(hex,a){
+  if(!hex||!hex.startsWith('#')) return hex||'#fff';
+  const n=parseInt(hex.slice(1),16);
+  return `rgb(${Math.min(255,((n>>16)&0xff)+a)},${Math.min(255,((n>>8)&0xff)+a)},${Math.min(255,(n&0xff)+a)})`;
+}
+function darken(hex,a){
+  if(!hex||!hex.startsWith('#')) return hex||'#000';
+  const n=parseInt(hex.slice(1),16);
+  return `rgb(${Math.max(0,((n>>16)&0xff)-a)},${Math.max(0,((n>>8)&0xff)-a)},${Math.max(0,(n&0xff)-a)})`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// 인터랙션
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CV.addEventListener('click', e=>{
+  const r=CV.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(W/r.width);
+  const my=(e.clientY-r.top)*(H/r.height);
+  clickZones.forEach(z=>{
+    if(mx>=z.x&&mx<=z.x+z.w&&my>=z.y&&my<=z.y+z.h)
+      window.open(z.url,'_blank');
+  });
+});
+CV.addEventListener('mousemove', e=>{
+  const r=CV.getBoundingClientRect();
+  const mx=(e.clientX-r.left)*(W/r.width);
+  const my=(e.clientY-r.top)*(H/r.height);
+  CV.style.cursor=clickZones.some(z=>mx>=z.x&&mx<=z.x+z.w&&my>=z.y&&my<=z.y+z.h)?'pointer':'default';
+});
+
+function savePNG(){
+  const a=document.createElement('a');
+  a.download='yam_comic_ghibli.png';
+  a.href=CV.toDataURL('image/png'); a.click();
+}
+</script>
+</body>
+</html>
