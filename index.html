@@ -3,742 +3,782 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>급할때 찾는 앱</title>
-  <link rel="manifest" href="manifest.json">
+  <title>얌 - 내 주변 화장실</title>
+  <link rel="icon" href="/icons/icon-192.png" type="image/png">
+  <link rel="shortcut icon" href="/icons/icon-192.png" type="image/png">
+  <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#00b896">
-  
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Kakao Map SDK -->
-  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=b61df9e2cd51a4711fae0c9791014e2d&libraries=services,clusterer"></script>
-  
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="얌 YAM">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <meta name="description" content="급할 때 가장 먼저 찾는 화장실 앱.">
+  <meta property="og:title" content="얌 - 내 주변 화장실">
+  <meta property="og:image" content="/icons/icon-512.png">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <!-- 카카오맵 SDK -->
+  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=f59ba786d95984d04a6269d4e1e86bf3&libraries=services,geocoder&autoload=false"></script>
+  <!-- Google Maps SDK -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAplYXuzjhjgi-f-M_zR3qahJ-KehNhD1g&libraries=places&language=en&region=KR" async defer></script>
+  <script>var _urlLang=new URLSearchParams(location.search).get('lang')||'ko';</script>
   <style>
-    /* CSS Variables (Light Mode Only) */
-    :root {
-      --bg: #f0f4f8;
-      --white: #ffffff;
-      --surface: #f7f9fc;
-      --surface2: #eef2f7;
-      --border: #dde3ed;
-      --border2: #c8d0de;
-      --teal: #00b896;
-      --teal2: #009d80;
-      --teal-light: #e6faf5;
-      --blue: #2563eb;
-      --blue-light: #eff6ff;
-      --gold: #d97706;
-      --gold-light: #fffbeb;
-      --red: #dc2626;
-      --red-light: #fef2f2;
-      --green: #059669;
-      --green-light: #ecfdf5;
-      --yellow: #d97706;
-      --yellow-light: #fefce8;
-      --text: #0f172a;
-      --text2: #334155;
-      --muted: #64748b;
-      --muted2: #94a3b8;
-      --star: #f59e0b;
-    }
-    
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Noto Sans KR', sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
-      overflow: hidden; /* SPA behavior */
-      -webkit-font-smoothing: antialiased;
-    }
-    .syne { font-family: 'Syne', sans-serif; }
-    .hidden { display: none !important; }
-    
-    /* App Container */
-    #app { width: 100vw; height: 100vh; position: relative; }
-    
-    /* --- 1. Landing Screen --- */
-    #landing {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(160deg, #f0faf7, #e8f5ff, #f0f4f8);
-      z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      transition: opacity 0.5s ease;
-    }
-    .grid-lines {
-      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-      background-image: linear-gradient(var(--teal) 1px, transparent 1px), linear-gradient(90deg, var(--teal) 1px, transparent 1px);
-      background-size: 36px 36px; opacity: 0.06;
-      animation: gridMove 20s linear infinite; pointer-events: none;
-    }
-    @keyframes gridMove { from { background-position: 0 0; } to { background-position: 0 36px; } }
-    
-    .glow-orb { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.5; animation: pulse 4s ease-in-out infinite alternate; pointer-events: none; }
-    .orb1 { width: 200px; height: 200px; background: var(--teal); top: 10%; left: -50px; }
-    .orb2 { width: 250px; height: 250px; background: var(--blue); bottom: 20%; right: -80px; animation-delay: -2s; }
-    @keyframes pulse { from { transform: scale(1); opacity: 0.4; } to { transform: scale(1.2); opacity: 0.7; } }
-    
-    .floating-emojis { position: absolute; width: 100%; height: 100%; pointer-events: none; }
-    .floating-emoji { position: absolute; font-size: 24px; animation: floatPin 6s ease-in-out infinite; }
-    .fe1 { top: 20%; left: 15%; animation-delay: 0s; }
-    .fe2 { top: 30%; right: 20%; animation-delay: 1s; }
-    .fe3 { top: 60%; left: 25%; animation-delay: 2s; }
-    .fe4 { top: 70%; right: 15%; animation-delay: 3s; }
-    .fe5 { top: 10%; right: 40%; animation-delay: 4s; }
-    @keyframes floatPin { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-20px) rotate(10deg); } }
-    
-    .landing-content { position: relative; z-index: 10; text-align: center; padding: 20px; }
-    .logo-box {
-      width: 84px; height: 84px; background: linear-gradient(135deg, var(--teal), var(--blue));
-      border-radius: 26px; display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 20px; color: white; font-size: 48px; font-weight: 800;
-      animation: logoGlow 3s infinite alternate; box-shadow: 0 10px 25px rgba(0, 184, 150, 0.4);
-    }
-    @keyframes logoGlow { from { box-shadow: 0 10px 25px rgba(0,184,150,0.3); } to { box-shadow: 0 15px 35px rgba(0,184,150,0.6); } }
-    
-    .tagline { color: var(--teal); font-weight: 800; font-size: 12px; letter-spacing: 0.28em; margin-bottom: 12px; }
-    .title { font-size: 36px; font-weight: 800; line-height: 1.3; margin-bottom: 16px; color: var(--text); }
-    .title .highlight { color: var(--teal); }
-    .subtitle { font-size: 15px; color: var(--text2); line-height: 1.5; margin-bottom: 30px; }
-    
-    .feature-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 40px; }
-    .f-chip { background: var(--white); padding: 8px 14px; border-radius: 20px; font-size: 14px; font-weight: 600; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    
-    .cta-btn {
-      background: linear-gradient(135deg, var(--teal), var(--blue)); color: white; border: none; padding: 18px 32px; border-radius: 30px;
-      font-size: 18px; font-weight: 700; width: 100%; max-width: 320px; box-shadow: 0 10px 20px rgba(0, 184, 150, 0.3); cursor: pointer; transition: transform 0.2s;
-    }
-    .cta-btn:active { transform: scale(0.96); }
-    .powered-by { position: absolute; bottom: 30px; font-size: 12px; color: var(--muted); font-weight: 500; }
-    
-    /* --- 2. Map Screen --- */
-    #mapscreen { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; flex-direction: column; }
-    
-    .topbar {
-      position: absolute; top: 0; left: 0; width: 100%; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 16px;
-      background: linear-gradient(to bottom, rgba(255,255,255,0.9), rgba(255,255,255,0)); pointer-events: none;
-    }
-    .topbar > * { pointer-events: auto; }
-    .small-logo { width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(135deg, var(--teal), var(--blue)); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-    .search-box { flex: 1; margin: 0 12px; background: var(--white); border-radius: 20px; padding: 10px 16px; display: flex; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid var(--border); }
-    .search-box span { color: var(--muted); font-size: 14px; margin-left: 8px; }
-    .rec-btn { background: linear-gradient(135deg, var(--teal), var(--blue)); color: white; padding: 10px 14px; border-radius: 20px; font-weight: 700; font-size: 14px; border: none; box-shadow: 0 4px 10px rgba(0, 184, 150, 0.3); cursor: pointer; }
-    
-    #kakaoMap { flex: 1; width: 100%; height: 100%; z-index: 1; }
-    
-    /* Map Elements */
-    .loc-pill { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); z-index: 100; background: var(--white); padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border: 1px solid var(--border); display: flex; align-items: center; gap: 6px; }
-    .blue-dot { width: 8px; height: 8px; background: var(--blue); border-radius: 50%; animation: pulseBlue 2s infinite; }
-    @keyframes pulseBlue { 0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); } }
-    
-    .map-fabs { position: absolute; right: 16px; bottom: 30px; z-index: 100; display: flex; flex-direction: column; gap: 12px; }
-    .fab { width: 44px; height: 44px; border-radius: 50%; background: var(--white); border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; }
-    
-    .legend { position: absolute; left: 16px; bottom: 30px; z-index: 100; background: rgba(255,255,255,0.9); padding: 10px 14px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); backdrop-filter: blur(4px); }
-    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 4px; font-weight: 500; }
-    .legend-item:last-child { margin-bottom: 0; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .dot.blue { background: var(--blue); } .dot.green { background: var(--green); } .dot.yellow { background: var(--yellow); } .dot.red { background: var(--red); }
-    
-    .loading-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 200; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-    .bounce-pin { font-size: 40px; animation: bounce 1s infinite; }
-    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
-    .loading-text { font-weight: 700; margin-top: 16px; color: var(--teal); }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Noto Sans KR',sans-serif;background:#f0f4f8;color:#0f172a;overflow:hidden;}
 
-    /* Custom Kakao Marker */
-    .custom-marker { background: var(--white); border-radius: 10px; padding: 5px 9px; font-size: 13px; font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border: 2px solid; position: relative; white-space: nowrap; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-    .custom-marker::after { content: ''; position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); border-width: 6px 5px 0; border-style: solid; border-color: inherit; border-bottom-color: transparent !important; border-left-color: transparent !important; border-right-color: transparent !important; }
-    .marker-public { border-color: var(--blue); } .marker-free { border-color: var(--green); } .marker-locked { border-color: var(--yellow); } .marker-unknown { border-color: var(--red); }
-    
-    /* --- Bottom Sheets --- */
-    .sheet-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 998; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-    .sheet-overlay.active { opacity: 1; pointer-events: auto; }
-    .bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--white); border-radius: 24px 24px 0 0; z-index: 999; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 -10px 30px rgba(0,0,0,0.1); max-height: 72vh; display: flex; flex-direction: column; }
-    .bottom-sheet.active { transform: translateY(0); }
-    .handle-bar { width: 40px; height: 4px; background: var(--border2); border-radius: 2px; margin: 12px auto; }
-    .sheet-header { padding: 0 20px 16px; position: relative; border-bottom: 1px solid var(--border); }
-    .close-btn { position: absolute; right: 20px; top: 0; font-size: 24px; color: var(--muted); cursor: pointer; border: none; background: transparent; }
-    .sheet-content { padding: 20px; overflow-y: auto; flex: 1; }
-    
-    /* Rec Sheet Features */
-    .filter-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 10px; margin-top: 12px; scrollbar-width: none; }
-    .filter-scroll::-webkit-scrollbar { display: none; }
-    .filter-chip { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); font-size: 13px; font-weight: 600; white-space: nowrap; color: var(--text2); background: var(--white); cursor: pointer; }
-    .filter-chip.active { background: var(--teal); color: white; border-color: var(--teal); }
-    
-    .rec-card { border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
-    .rec-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
-    .rec-card.rank-1::before { background: var(--teal); } .rec-card.rank-2::before { background: var(--blue); } .rec-card.rank-3::before { background: var(--gold); }
-    
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
-    .card-title-box { display: flex; gap: 8px; align-items: center; }
-    .card-title { font-weight: 700; font-size: 16px; }
-    .rank-badge { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 12px; padding: 2px 8px; border-radius: 10px; color: white; }
-    .rank-1-badge { background: linear-gradient(135deg, #d97706, #fbbf24); } /* 금 */
-    .rank-2-badge { background: linear-gradient(135deg, #64748b, #cbd5e1); } /* 은 */
-    .rank-3-badge { background: linear-gradient(135deg, #92400e, #d97706); } /* 동 */
-    
-    .card-addr { font-size: 13px; color: var(--muted); }
-    .card-dist { font-size: 13px; font-weight: 600; color: var(--blue); }
-    .card-rating { font-size: 13px; font-weight: 600; color: var(--star); display: flex; align-items: center; gap: 4px; }
-    .card-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
-    .meta-tag { font-size: 11px; padding: 4px 8px; border-radius: 4px; background: var(--surface2); font-weight: 600; color: var(--text2); }
-    
-    .card-actions { display: flex; gap: 8px; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
-    .action-btn { flex: 1; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; }
-    .btn-primary { background: var(--teal-light); color: var(--teal2); }
-    .btn-secondary { background: var(--surface2); color: var(--text2); }
-    
-    /* Detail Sheet Features */
-    .detail-tag { font-family: 'Syne', sans-serif; color: var(--teal); font-weight: 800; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; }
-    .detail-title { font-size: 20px; font-weight: 700; margin: 4px 0; }
-    .detail-addr { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
-    .detail-rating-row { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; margin-bottom: 12px; }
-    .rating-stars { color: var(--star); }
-    .rating-link { color: var(--blue); text-decoration: underline; cursor: pointer; font-size: 13px; }
-    
-    .floor-list { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-    .floor-card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-    .floor-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--white); cursor: pointer; }
-    .floor-info-left { display: flex; align-items: center; gap: 12px; }
-    .floor-badge { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 16px; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-    .badge-green { background: var(--green-light); color: var(--green); } .badge-yellow { background: var(--yellow-light); color: var(--yellow); } .badge-red { background: var(--red-light); color: var(--red); }
-    
-    .floor-name-wrap { display: flex; flex-direction: column; gap: 4px; }
-    .floor-name { font-weight: 700; font-size: 15px; }
-    .floor-status-text { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
-    
-    .floor-pw-badge { font-family: 'Syne', sans-serif; font-weight: 800; padding: 4px 10px; border-radius: 8px; font-size: 14px; }
-    .pw-badge-gold { background: var(--gold-light); color: var(--gold); border: 1px solid #fde68a; }
-    .pw-badge-none { font-family: 'Noto Sans KR', sans-serif; font-size: 12px; font-weight: 600; color: var(--muted); }
-    
-    .floor-detail { padding: 16px; background: var(--surface); border-top: 1px solid var(--border); display: none; }
-    .floor-detail.open { display: block; }
-    
-    .pw-box-large { background: var(--white); border-radius: 12px; padding: 16px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .pw-box-left { display: flex; flex-direction: column; gap: 4px; }
-    .pw-label { font-size: 12px; font-weight: 600; color: var(--muted); }
-    .pw-value { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--gold); }
-    .pw-value.no-pw { font-family: 'Noto Sans KR', sans-serif; font-size: 16px; color: var(--text); }
-    .pw-box-right { text-align: right; }
-    .conf-status { font-weight: 700; font-size: 14px; }
-    .conf-green { color: var(--green); } .conf-yellow { color: var(--yellow); } .conf-red { color: var(--red); }
-    
-    .conf-bar-wrap { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin-bottom: 16px; }
-    .conf-bar { height: 100%; transition: width 0.5s ease; }
-    .conf-bar.green { background: var(--green); } .conf-bar.yellow { background: var(--yellow); } .conf-bar.red { background: var(--red); }
-    
-    .report-btn { width: 100%; background: var(--white); border: 1px dashed var(--muted2); color: var(--text2); padding: 12px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; }
-    
-    /* --- Modals --- */
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; }
-    .modal-overlay.active { display: flex; opacity: 1; }
-    .modal-content { background: var(--white); width: 90%; max-width: 400px; border-radius: 20px; padding: 24px; transform: scale(0.95); transition: transform 0.2s; }
-    .modal-overlay.active .modal-content { transform: scale(1); }
-    
-    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
-    .modal-desc { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
-    
-    .star-select { display: flex; justify-content: center; gap: 8px; font-size: 40px; color: var(--border2); margin-bottom: 12px; cursor: pointer; }
-    .star-select span.active { color: var(--star); }
-    .rating-label { text-align: center; font-weight: 700; color: var(--teal); margin-bottom: 20px; font-size: 16px; min-height: 24px; }
-    
-    .modal-textarea { width: 100%; border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-family: inherit; font-size: 14px; resize: none; height: 80px; margin-bottom: 20px; outline: none; }
-    
-    .modal-actions { display: flex; gap: 12px; }
-    .modal-actions button { flex: 1; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 15px; border: none; cursor: pointer; }
-    .btn-cancel { background: var(--surface2); color: var(--text2); }
-    .btn-submit { background: var(--teal); color: white; }
-    
-    .report-input { width: 100%; text-align: center; font-family: 'Syne', monospace; font-size: 32px; font-weight: 800; letter-spacing: 8px; border: 1px solid var(--border); border-radius: 12px; padding: 16px; outline: none; margin-bottom: 16px; color: var(--gold); }
-    .loc-verify { background: var(--blue-light); color: var(--blue); padding: 12px; border-radius: 8px; font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 8px; margin-bottom: 20px; }
-    
-    /* --- Toast --- */
-    .toast { position: fixed; bottom: -60px; left: 50%; transform: translateX(-50%); background: rgba(30,41,59,0.9); color: white; padding: 12px 20px; border-radius: 30px; font-weight: 600; font-size: 14px; z-index: 2000; transition: bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 8px; pointer-events: none; }
-    .toast.show { bottom: 96px; }
+    /* ── 랜딩 ── */
+    #landing{position:fixed;inset:0;z-index:999;background:linear-gradient(160deg,#f0faf7,#e8f5ff,#f0f4f8);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s;}
+    #landing.hide{opacity:0;pointer-events:none;}
+    .grid{position:absolute;inset:0;background-image:linear-gradient(#00b896 1px,transparent 1px),linear-gradient(90deg,#00b896 1px,transparent 1px);background-size:40px 40px;opacity:0.05;pointer-events:none;}
+    .orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:0.4;pointer-events:none;}
+    .orb1{width:250px;height:250px;background:#00b896;top:5%;left:-80px;}
+    .orb2{width:300px;height:300px;background:#2563eb;bottom:10%;right:-100px;}
+    .landing-inner{position:relative;z-index:1;text-align:center;padding:20px;width:100%;max-width:400px;}
+    .logo-wrap{width:90px;height:90px;border-radius:28px;overflow:hidden;margin:0 auto 20px;box-shadow:0 12px 30px rgba(0,184,150,0.4);}
+    .logo-wrap img{width:100%;height:100%;object-fit:cover;}
+    .tagline{color:#00b896;font-weight:800;font-size:11px;letter-spacing:0.3em;margin-bottom:14px;}
+    .landing-title{font-size:38px;font-weight:900;line-height:1.25;margin-bottom:20px;color:#0f172a;}
+    .landing-title .hi{color:#00b896;}
+    .lang-btns{display:flex;gap:10px;justify-content:center;margin-bottom:18px;}
+    .lang-btn{padding:8px 20px;border-radius:20px;border:2px solid #00b896;background:rgba(255,255,255,0.15);color:#0f172a;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;font-family:'Noto Sans KR',sans-serif;}
+    .lang-btn.active{background:#00b896;color:#fff;box-shadow:0 4px 12px rgba(0,184,150,0.4);}
+    .start-btn{background:linear-gradient(135deg,#00b896,#2563eb);color:white;border:none;padding:18px 0;border-radius:32px;font-size:18px;font-weight:700;width:100%;box-shadow:0 10px 24px rgba(0,184,150,0.35);cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+    .powered{position:absolute;bottom:44px;font-size:12px;color:#94a3b8;}
+    .contact{position:absolute;bottom:24px;font-size:12px;color:#4da6ff;font-weight:600;opacity:0.85;}
+
+    /* ── 지도화면 ── */
+    #mapscreen{position:fixed;inset:0;z-index:1;visibility:hidden;}
+    #mapscreen.show{visibility:visible;}
+    #kakaoMap{position:absolute;inset:0;width:100%!important;height:100%!important;}
+
+    /* ── 상단바 ── */
+    .topbar{position:absolute;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(to bottom,rgba(255,255,255,0.97) 70%,transparent);pointer-events:none;}
+    .topbar>*{pointer-events:auto;}
+    .logo-sm{width:38px;height:38px;border-radius:12px;overflow:hidden;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,0.12);}
+    .logo-sm img{width:100%;height:100%;object-fit:cover;}
+    .search-box{flex:1;background:white;border-radius:22px;padding:10px 14px;display:flex;align-items:center;gap:8px;box-shadow:0 4px 14px rgba(0,0,0,0.09);border:1px solid #dde3ed;cursor:pointer;}
+    .search-box span{color:#94a3b8;font-size:14px;}
+
+    /* ── 필터 ── */
+    .filters{position:absolute;top:66px;left:0;right:0;z-index:100;display:flex;gap:8px;padding:0 14px;overflow-x:auto;scrollbar-width:none;}
+    .filters::-webkit-scrollbar{display:none;}
+    .fc{padding:7px 15px;border-radius:20px;border:1.5px solid #c8d0de;font-size:13px;font-weight:600;white-space:nowrap;background:white;cursor:pointer;font-family:'Noto Sans KR',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,0.07);flex-shrink:0;}
+    .fc.on{background:#00b896;color:white;border-color:#00b896;}
+
+    /* ── 필 ── */
+    #loc-pill{position:absolute;top:108px;left:50%;transform:translateX(-50%);z-index:100;background:white;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.1);border:1px solid #dde3ed;display:none;align-items:center;gap:6px;}
+    #loc-pill.show{display:flex;}
+    .bdot{width:8px;height:8px;background:#2563eb;border-radius:50%;flex-shrink:0;}
+    #count-pill{position:absolute;top:146px;left:50%;transform:translateX(-50%);z-index:100;background:white;border-radius:20px;padding:6px 14px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.1);border:1px solid #dde3ed;display:none;align-items:center;gap:6px;}
+    #count-pill.show{display:flex;}
+
+    /* ── 로딩 ── */
+    #loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;background:white;border-radius:20px;padding:14px 22px;display:none;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.12);font-size:13px;font-weight:700;}
+    #loading.show{display:flex;}
+    #mini-loading{position:absolute;top:108px;right:14px;z-index:200;background:white;border-radius:50%;width:36px;height:36px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.15);}
+    #mini-loading.show{display:flex;}
+    .spin{width:18px;height:18px;border:2.5px solid #dde3ed;border-top-color:#00b896;border-radius:50%;animation:spin 0.7s linear infinite;}
+    .spin-sm{width:16px;height:16px;border:2px solid #dde3ed;border-top-color:#00b896;border-radius:50%;animation:spin 0.7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── FAB ── */
+    .fabs{position:absolute;right:14px;bottom:40px;z-index:100;display:flex;flex-direction:column;gap:10px;align-items:center;}
+    .fab{width:46px;height:46px;border-radius:50%;background:white;border:none;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .fab-myloc{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#00b896,#2563eb);box-shadow:0 6px 20px rgba(0,184,150,0.45);display:flex;align-items:center;justify-content:center;font-size:24px;transition:transform 0.15s;}
+    .fab-myloc:active{transform:scale(0.92);}
+
+    /* ── 범례 ── */
+    .legend{position:absolute;left:14px;bottom:40px;z-index:100;background:rgba(255,255,255,0.93);padding:10px 14px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+    .li{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-bottom:4px;}
+    .li:last-child{margin-bottom:0;}
+    .ld{width:10px;height:10px;border-radius:50%;}
+    .ld.pub{background:#2563eb;}
+    .ld.opn{background:#059669;}
+    .ld.goo{background:#f59e0b;}
+
+    /* ── 하단 버튼 (숨김) ── */
+    #bottom-search{display:none!important;}
+
+    /* ── 마커 ── */
+    .cm{background:white;border-radius:10px;padding:5px 10px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.15);border:2px solid;position:relative;white-space:nowrap;display:flex;align-items:center;gap:4px;font-family:'Noto Sans KR',sans-serif;}
+    .cm::after{content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-width:6px;border-top-style:solid;}
+    .cm-pub{border-color:#2563eb;color:#2563eb;}
+    .cm-pub::after{border-top-color:#2563eb;}
+    .cm-opn{border-color:#059669;color:#059669;}
+    .cm-opn::after{border-top-color:#059669;}
+    .cm-goo{border-color:#f59e0b;color:#b45309;}
+    .cm-goo::after{border-top-color:#f59e0b;}
+
+    /* ── 바텀시트 ── */
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:600;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+    .overlay.on{opacity:1;pointer-events:auto;}
+    .sheet{position:fixed;bottom:0;left:0;right:0;z-index:601;background:white;border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.2,0.8,0.2,1);max-height:75vh;display:flex;flex-direction:column;box-shadow:0 -8px 30px rgba(0,0,0,0.1);}
+    .sheet.on{transform:translateY(0);}
+    .handle{width:40px;height:4px;background:#c8d0de;border-radius:2px;margin:12px auto;flex-shrink:0;cursor:pointer;}
+    .sc{overflow-y:auto;flex:1;padding:0 20px 40px;}
+    .det-type{font-size:11px;font-weight:800;color:#00b896;letter-spacing:0.1em;margin-bottom:4px;}
+    .det-name{font-size:20px;font-weight:900;margin-bottom:4px;line-height:1.3;}
+    .det-addr{font-size:13px;color:#64748b;margin-bottom:14px;line-height:1.5;}
+    .dist-card{background:linear-gradient(135deg,#e6faf5,#eff6ff);border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+    .dist-num{font-size:32px;font-weight:900;color:#00b896;}
+    .dist-right{text-align:right;}
+    .dist-walk{font-size:12px;font-weight:700;color:#2563eb;}
+    .dist-min{font-size:11px;color:#94a3b8;}
+    .badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+    .badge{padding:5px 10px;border-radius:8px;font-size:12px;font-weight:700;}
+    .b-pub{background:#eff6ff;color:#2563eb;}
+    .b-opn{background:#ecfdf5;color:#059669;}
+    .b-goo{background:#fef3c7;color:#b45309;}
+    .b-free{background:#e6faf5;color:#009d80;}
+    .info-row{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid #f1f5f9;font-size:14px;}
+    .info-row:last-of-type{border-bottom:none;}
+    .ii{font-size:18px;width:26px;text-align:center;flex-shrink:0;}
+    .il{color:#94a3b8;font-size:11px;font-weight:700;min-width:48px;padding-top:2px;}
+    .iv{font-weight:600;flex:1;line-height:1.4;}
+    .acts{display:flex;gap:8px;margin-top:16px;}
+    .act{flex:1;padding:13px 0;border-radius:14px;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+    .a-kakao{background:#e6faf5;color:#009d80;}
+    .a-naver{background:#e8f5e9;color:#2e7d32;}
+    .a-copy{background:#f1f5f9;color:#334155;}
+
+    /* ── 검색 오버레이 ── */
+    #srch{position:fixed;inset:0;z-index:700;background:white;display:none;flex-direction:column;}
+    #srch.show{display:flex;}
+    .srch-top{padding:13px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #dde3ed;}
+    .srch-back{background:none;border:none;font-size:24px;cursor:pointer;color:#64748b;}
+    .srch-inp{flex:1;border:none;outline:none;font-size:16px;font-family:'Noto Sans KR',sans-serif;}
+    .srch-go{background:#00b896;color:white;border:none;border-radius:10px;padding:8px 16px;font-weight:700;font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+    .srch-label{padding:14px 16px 8px;font-size:13px;color:#64748b;font-weight:700;}
+    .qp-wrap{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px;}
+    .qp{padding:7px 14px;border-radius:20px;border:1.5px solid #dde3ed;font-size:13px;font-weight:600;background:white;cursor:pointer;font-family:'Noto Sans KR',sans-serif;}
+
+    /* ── 토스트 ── */
+    #toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(14px);background:#0f172a;color:white;padding:10px 20px;border-radius:50px;font-size:13px;font-weight:700;opacity:0;transition:all 0.3s;z-index:800;white-space:nowrap;}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
   </style>
 </head>
 <body>
-  <div id="app">
-    <!-- Landing Screen -->
-    <div id="landing">
-      <div class="grid-lines"></div>
-      <div class="glow-orb orb1"></div>
-      <div class="glow-orb orb2"></div>
-      <div class="floating-emojis">
-        <div class="floating-emoji fe1">🚻</div>
-        <div class="floating-emoji fe2">🔒</div>
-        <div class="floating-emoji fe3">🟢</div>
-        <div class="floating-emoji fe4">🏢</div>
-        <div class="floating-emoji fe5">🧻</div>
-      </div>
-      <div class="landing-content">
-        <div class="logo-box syne">Y</div>
-        <div class="tagline">REAL-TIME TOILET FINDER</div>
-        <h1 class="title">급할 때<br><span class="highlight">가장 먼저</span><br>찾는 앱</h1>
-        <p class="subtitle">비밀번호, 층별 정보, 휴지 여부까지<br>실시간으로 확인하세요</p>
-        <div class="feature-chips">
-          <span class="f-chip">🔒 비밀번호</span>
-          <span class="f-chip">🏢 층별정보</span>
-          <span class="f-chip">🧻 휴지여부</span>
-          <span class="f-chip">⭐ 평점</span>
-        </div>
-        <button class="cta-btn" onclick="startApp()">내 주변 화장실 찾기</button>
-      </div>
-      <div class="powered-by">Powered by 테크셀</div>
+
+<!-- 랜딩 -->
+<div id="landing">
+  <div class="grid"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="landing-inner">
+    <div class="logo-wrap"><img src="icon.png" alt="얌" onerror="this.parentElement.style.background='linear-gradient(135deg,#00b896,#2563eb)'"></div>
+    <div class="tagline">REAL-TIME TOILET FINDER</div>
+    <h1 class="landing-title" id="l-title">급할 때<br><span class="hi">가장 먼저</span><br>찾는 앱</h1>
+    <div class="lang-btns">
+      <button class="lang-btn active" onclick="setLang('ko')">🇰🇷 한국어</button>
+      <button class="lang-btn" onclick="setLang('en')">🇺🇸 English</button>
     </div>
-
-    <!-- Map Screen -->
-    <div id="mapscreen" class="hidden">
-      <div class="topbar">
-        <div class="small-logo syne">Y</div>
-        <div class="search-box">
-          <span>🔍</span><span>장소, 주소 검색</span>
-        </div>
-        <button class="rec-btn" onclick="openRecSheet()">⭐ 추천</button>
-      </div>
-
-      <div id="kakaoMap"></div>
-
-      <div class="loc-pill">
-        <div class="blue-dot"></div>
-        <span id="loc-text">위치 찾는 중...</span>
-      </div>
-
-      <div class="map-fabs">
-        <button class="fab" onclick="moveToCurrentLoc()">📍</button>
-        <button class="fab" onclick="window.location.reload()">🔄</button>
-      </div>
-
-      <div class="legend">
-        <div class="legend-item"><div class="dot blue"></div> 공공 화장실</div>
-        <div class="legend-item"><div class="dot green"></div> 무료/개방</div>
-        <div class="legend-item"><div class="dot yellow"></div> 비밀번호 필요</div>
-        <div class="legend-item"><div class="dot red"></div> 정보 없음</div>
-      </div>
-
-      <div class="loading-overlay" id="loading-overlay">
-        <div class="bounce-pin">📍</div>
-        <div class="loading-text">주변 정보를 불러오는 중...</div>
-      </div>
-    </div>
-
-    <!-- Overlays -->
-    <div class="sheet-overlay" id="sheet-overlay" onclick="closeAllSheets()"></div>
-
-    <!-- Recommendation Sheet -->
-    <div class="bottom-sheet" id="rec-sheet">
-      <div class="handle-bar" onclick="closeAllSheets()"></div>
-      <div class="sheet-header">
-        <button class="close-btn" onclick="closeAllSheets()">×</button>
-        <div class="detail-tag">⭐ AI 추천</div>
-        <h2 class="detail-title">내 주변 추천 화장실</h2>
-        <div class="detail-addr">현재 위치 기반 가장 최적의 화장실입니다.</div>
-        
-        <div class="filter-scroll" id="rec-filters">
-          <button class="filter-chip active" onclick="applyFilter('all')">전체</button>
-          <button class="filter-chip" onclick="applyFilter('open')">🟢 개방형</button>
-          <button class="filter-chip" onclick="applyFilter('tissue')">🧻 휴지 비치</button>
-          <button class="filter-chip" onclick="applyFilter('high')">⭐ 평점 높은 순</button>
-          <button class="filter-chip" onclick="applyFilter('free')">✅ 무료</button>
-        </div>
-      </div>
-      <div class="sheet-content" id="rec-content"></div>
-    </div>
-
-    <!-- Building Detail Sheet -->
-    <div class="bottom-sheet" id="detail-sheet">
-      <div class="handle-bar" onclick="closeAllSheets()"></div>
-      <div class="sheet-header">
-        <button class="close-btn" onclick="closeAllSheets()">×</button>
-        <div class="detail-tag" id="det-tag">TAG</div>
-        <h2 class="detail-title" id="det-title">Title</h2>
-        <div class="detail-addr" id="det-addr">Address</div>
-        <div class="detail-rating-row">
-          <span class="rating-stars" id="det-stars">★★★★★</span>
-          <span id="det-rating-val">0.0</span>
-          <span style="color:var(--muted); font-weight:400;" id="det-rating-cnt">(0명)</span>
-          <span class="rating-link" onclick="openRatingModal()">평가하기</span>
-        </div>
-        <div class="card-meta" id="det-meta"></div>
-      </div>
-      <div class="sheet-content">
-        <div class="floor-list" id="det-floors"></div>
-      </div>
-    </div>
-
-    <!-- Rating Modal -->
-    <div class="modal-overlay" id="rating-modal" onclick="closeModal(event, 'rating-modal')">
-      <div class="modal-content">
-        <div class="modal-title">⭐ 화장실 평가하기</div>
-        <div class="modal-desc" id="rating-target-name">건물명</div>
-        <div class="star-select" id="star-select">
-          <span onclick="setTempRating(1)">★</span>
-          <span onclick="setTempRating(2)">★</span>
-          <span onclick="setTempRating(3)">★</span>
-          <span onclick="setTempRating(4)">★</span>
-          <span onclick="setTempRating(5)">★</span>
-        </div>
-        <div class="rating-label" id="rating-label">별점을 선택해주세요</div>
-        <textarea class="modal-textarea" placeholder="선택사항: 한 줄 후기를 남겨주세요"></textarea>
-        <div class="modal-actions">
-          <button class="btn-cancel" onclick="closeModal(null, 'rating-modal')">취소</button>
-          <button class="btn-submit" onclick="submitRating()">평가 제출</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Report Modal -->
-    <div class="modal-overlay" id="report-modal" onclick="closeModal(event, 'report-modal')">
-      <div class="modal-content">
-        <div class="modal-title">🔑 비밀번호 수정</div>
-        <div class="modal-desc"><span id="report-target-name" style="font-weight:700;"></span> 화장실 비밀번호를 알고 계신가요?<br>현장 확인 후 입력해주세요.</div>
-        <input type="text" class="report-input" id="report-input" placeholder="----" maxlength="6" inputmode="numeric">
-        <div class="loc-verify">📡 현재 위치가 건물 반경 30m 내에서 확인되었습니다</div>
-        <div class="modal-actions">
-          <button class="btn-cancel" onclick="closeModal(null, 'report-modal')">취소</button>
-          <button class="btn-submit" onclick="submitReport()">제보하기</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Toast -->
-    <div class="toast" id="toast">✅ 메시지</div>
+    <button class="start-btn" id="start-btn" onclick="startApp()">📍 내 주변 화장실 찾기</button>
   </div>
+  <div class="powered">Powered by 테크셀</div>
+  <div class="contact">문의 : texasman@naver.com</div>
+</div>
 
-  <script>
-    // 1. Data Mock
-    const BUILDINGS = {
-      municipal: {
-        id: 'municipal', tag:'공공 화장실', title:'강남구 공중화장실', icon:'🚻',
-        addr:'서울 강남구 강남대로 396', dist:'84m', lat:37.4983, lng:127.0285, markerType:'public',
-        isPublic:true, isFree:true, hasTissue:true, rating:4.8, ratingCount:127,
-        meta:['🚻 공공','✅ 무료','🕐 24시간'],
-        floors:[
-          {label:'지상 1층', status:'green', pw:null, tissue:true, conf:95, badge:'1F'},
-          {label:'지하 1층', status:'green', pw:null, tissue:true, conf:88, badge:'B1'},
-        ]
-      },
-      station: {
-        id: 'station', tag:'지하철역', title:'강남역 2호선 화장실', icon:'🚉',
-        addr:'서울 강남구 강남대로 지하 396', dist:'130m', lat:37.4981, lng:127.0276, markerType:'free',
-        isPublic:true, isFree:true, hasTissue:true, rating:4.6, ratingCount:89,
-        meta:['🚉 지하철','✅ 무료','🧻 휴지'],
-        floors:[
-          {label:'게이트 외부 (B1)', status:'green', pw:null, tissue:true, conf:99, badge:'B1'},
-          {label:'게이트 내부 (B2)', status:'green', pw:null, tissue:true, conf:97, badge:'B2'},
-        ]
-      },
-      mall: {
-        id: 'mall', tag:'오피스 빌딩', title:'삼성타운 A동', icon:'🏬',
-        addr:'서울 강남구 서초대로74길 11', dist:'210m', lat:37.4997, lng:127.0310, markerType:'locked',
-        isPublic:false, isFree:false, hasTissue:true, rating:3.9, ratingCount:44,
-        meta:['🏢 민간','🔒 비밀번호','🧻 일부'],
-        floors:[
-          {label:'1층', status:'green', pw:null, tissue:true, conf:82, badge:'1F'},
-          {label:'2층', status:'yellow', pw:'2456', tissue:true, conf:73, badge:'2F'},
-          {label:'3층', status:'yellow', pw:'8821', tissue:false, conf:55, badge:'3F'},
-          {label:'4층', status:'red', pw:null, tissue:false, conf:20, badge:'4F'},
-          {label:'5층', status:'yellow', pw:'1234', tissue:true, conf:61, badge:'5F'},
-        ]
-      },
-      cafe: {
-        id: 'cafe', tag:'카페', title:'스타벅스 강남점', icon:'☕',
-        addr:'서울 강남구 강남대로 452 1층', dist:'160m', lat:37.4975, lng:127.0289, markerType:'locked',
-        isPublic:false, isFree:false, hasTissue:true, rating:3.5, ratingCount:32,
-        meta:['☕ 매장','🔒 비밀번호','💳 구매 후'],
-        floors:[
-          {label:'1층 화장실', status:'yellow', pw:'5823', tissue:true, conf:68, badge:'1F'},
-          {label:'2층 화장실', status:'yellow', pw:'5823', tissue:false, conf:65, badge:'2F'},
-        ]
-      },
-      convenience: {
-        id: 'convenience', tag:'편의점', title:'GS25 강남역점', icon:'🏪',
-        addr:'서울 강남구 강남대로 400', dist:'95m', lat:37.4978, lng:127.0270, markerType:'unknown',
-        isPublic:false, isFree:false, hasTissue:false, rating:2.8, ratingCount:18,
-        meta:['🏪 매장','❓ 정보 없음'],
-        floors:[
-          {label:'1층 화장실', status:'red', pw:null, tissue:false, conf:15, badge:'1F'},
-        ]
-      },
-      dept: {
-        id: 'dept', tag:'백화점', title:'현대백화점 무역센터점', icon:'🏢',
-        addr:'서울 강남구 테헤란로 517', dist:'320m', lat:37.5085, lng:127.0630, markerType:'free',
-        isPublic:false, isFree:true, hasTissue:true, rating:4.5, ratingCount:201,
-        meta:['🏬 백화점','✅ 무료','🧻 휴지 완비'],
-        floors:[
-          {label:'B2층', status:'green', pw:null, tissue:true, conf:91, badge:'B2'},
-          {label:'B1층', status:'green', pw:null, tissue:true, conf:93, badge:'B1'},
-          {label:'1층', status:'green', pw:null, tissue:true, conf:89, badge:'1F'},
-          {label:'2층', status:'green', pw:null, tissue:true, conf:88, badge:'2F'},
-          {label:'3층', status:'green', pw:null, tissue:true, conf:87, badge:'3F'},
-          {label:'4층', status:'green', pw:null, tissue:true, conf:85, badge:'4F'},
-        ]
+<!-- 지도화면 -->
+<div id="mapscreen">
+  <div id="kakaoMap"></div>
+  <div class="topbar">
+    <div class="logo-sm"><img src="icon.png" alt="얌" onerror="this.parentElement.style.background='linear-gradient(135deg,#00b896,#2563eb)'"></div>
+    <div class="search-box" onclick="openSrch()"><span>🔍</span><span id="srch-label">지역명 또는 주소 검색</span></div>
+  </div>
+  <div class="filters">
+    <button class="fc on" id="fc-all" onclick="setFilter('all')">전체</button>
+    <button class="fc" id="fc-pub" onclick="setFilter('public')">🚻 공중화장실</button>
+    <button class="fc" id="fc-opn" onclick="setFilter('open')">🏢 개방화장실</button>
+  </div>
+  <div id="loc-pill"><div class="bdot"></div><span id="loc-txt">위치 확인 중...</span></div>
+  <div id="count-pill">📍 <span id="cnt">0</span><span id="cnt-label"> 개 발견</span></div>
+  <div id="loading"><div class="spin"></div><span id="loading-txt">화장실 검색 중...</span></div>
+  <div id="mini-loading"><div class="spin-sm"></div></div>
+  <div id="bottom-search"></div>
+  <div class="fabs">
+    <button class="fab" id="fab-plus" onclick="zoomIn()" title="확대">＋</button>
+    <button class="fab" id="fab-minus" onclick="zoomOut()" title="축소">－</button>
+    <button class="fab-myloc" onclick="goMyLoc()" title="현재 위치">📍</button>
+  </div>
+  <div class="legend">
+    <div class="li"><div class="ld pub"></div><span id="leg-pub">공중화장실</span></div>
+    <div class="li"><div class="ld opn"></div><span id="leg-opn">개방화장실</span></div>
+    <div class="li"><div class="ld goo"></div><span id="leg-goo">Google 개방</span></div>
+  </div>
+</div>
+
+<!-- 바텀시트 -->
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="handle" onclick="closeSheet()"></div>
+  <div class="sc" id="sheet-body"></div>
+</div>
+
+<!-- 검색 -->
+<div id="srch">
+  <div class="srch-top">
+    <button class="srch-back" onclick="closeSrch()">←</button>
+    <input class="srch-inp" id="srch-inp" type="text" placeholder="지역명 또는 주소">
+    <button class="srch-go" onclick="doSearch()">검색</button>
+  </div>
+  <div class="srch-label" id="srch-quick-label">빠른 선택</div>
+  <div class="qp-wrap" id="qp-wrap"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── 다국어 ────────────────────────────────────────────────
+var LANG={
+  ko:{
+    title:'급할 때<br><span class="hi">가장 먼저</span><br>찾는 앱',
+    startBtn:'📍 내 주변 화장실 찾기',
+    searchHint:'지역명 또는 주소 검색',
+    filterAll:'전체', filterPub:'🚻 공중화장실', filterOpn:'🏢 개방화장실',
+    loading:'화장실 검색 중...',
+    toastLoc:'📍 내 위치 확인 중...',
+    toastNoLoc:'위치 권한을 허용해주세요',
+    toastNone:'주변에 화장실이 없어요. 지도를 이동해보세요.',
+    toastNoQ:'검색어를 입력해주세요',
+    toastNoRes:'검색 결과가 없습니다',
+    srchPlaceholder:'지역명 또는 주소 (예: 홍대입구, 명동)',
+    detPublic:'공중화장실', detOpen:'개방화장실', detGoogle:'Google 개방화장실',
+    detFree:'✅ 무료', detFrom:'현재 위치에서',
+    detNear:'바로 근처!', detClose:'가까워요', detWalkable:'도보 가능',
+    detWalk:'분', detAddr:'주소', detPhone:'전화', detSrc:'출처',
+    detKakao:'🗺️ 카카오맵', detNaver:'🟢 네이버맵', detCopy:'📋 복사',
+    detCopied:'📋 주소 복사됨',
+    cntLabel:' 개 발견',
+    srcPublic:'행정안전부 공공데이터',
+    srcKakao:'카카오맵',
+    srcGoogle:'Google Maps',
+    legPub:'공중화장실', legOpn:'개방화장실', legGoo:'Google 개방',
+    qp:['강남역','홍대입구','명동','이태원','신촌','잠실','여의도','종로','건대입구','신림'],
+  },
+  en:{
+    title:'Find Restrooms<br><span class="hi">Near You</span><br>Instantly',
+    startBtn:'📍 Find Nearby Restrooms',
+    searchHint:'Search by area or address',
+    filterAll:'All', filterPub:'🚻 Public', filterOpn:'🏢 Open Access',
+    loading:'Searching restrooms...',
+    toastLoc:'📍 Getting your location...',
+    toastNoLoc:'Please allow location access',
+    toastNone:'No restrooms found nearby. Try moving the map.',
+    toastNoQ:'Please enter a search term',
+    toastNoRes:'No results found',
+    srchPlaceholder:'Area or address (e.g. Gangnam, Myeongdong)',
+    detPublic:'Public Restroom', detOpen:'Open Access Restroom', detGoogle:'Google Open Restroom',
+    detFree:'✅ Free', detFrom:'From your location',
+    detNear:'Right nearby!', detClose:'Very close', detWalkable:'Walkable',
+    detWalk:'min walk', detAddr:'Address', detPhone:'Phone', detSrc:'Source',
+    detKakao:'🗺️ Kakao Maps', detNaver:'🟢 Naver Maps', detCopy:'📋 Copy',
+    detCopied:'📋 Address copied!',
+    cntLabel:' found',
+    srcPublic:'Korea Public Data',
+    srcKakao:'Kakao Maps',
+    srcGoogle:'Google Maps',
+    legPub:'Public', legOpn:'Open Access', legGoo:'Google Open',
+    qp:['Gangnam','Hongdae','Myeongdong','Itaewon','Sinchon','Jamsil','Yeouido','Jongno','Konkuk','Sillim'],
+  }
+};
+var curLang=_urlLang, T=LANG[_urlLang]||LANG.ko;
+
+// ── 번역 사전 ──────────────────────────────────────────────
+// ── 한글 로마자 변환 (국립국어원 표준) ───────────────────
+var HANGUL_ONSET=['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'];
+var HANGUL_VOWEL=['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','wo','we','wi','yu','eu','ui','i'];
+var HANGUL_CODA=['','g','kk','gs','n','nj','nh','d','l','lg','lm','lb','ls','lt','lp','lh','m','b','bs','s','ss','ng','j','ch','k','t','p','h'];
+
+function romanize(text){
+  var result='';
+  for(var i=0;i<text.length;i++){
+    var code=text.charCodeAt(i);
+    if(code>=0xAC00&&code<=0xD7A3){
+      var offset=code-0xAC00;
+      var onset=Math.floor(offset/588);
+      var vowel=Math.floor((offset%588)/28);
+      var coda=offset%28;
+      result+=HANGUL_ONSET[onset]+HANGUL_VOWEL[vowel]+HANGUL_CODA[coda];
+    } else {
+      result+=text[i];
+    }
+  }
+  return result;
+}
+
+// ── 번역 사전 (사전에 있으면 사전, 없으면 로마자 변환) ─────
+var KO_EN=[
+  // 오타 포함 열린화장실
+  ['열린 화잘실','Open Restroom'],['열린화잘실','Open Restroom'],
+  ['열린 화장실','Open Restroom'],['열린화장실','Open Restroom'],
+  // 화장실 종류
+  ['공중화장실','Public Restroom'],['개방화장실','Open Restroom'],
+  ['무료화장실','Free Restroom'],['화장실','Restroom'],
+  // 시설 (긴 것 먼저)
+  ['행정복지센터','Community Service Center'],
+  ['주민센터','Community Center'],['동사무소','Community Center'],
+  ['구청','District Office'],['시청','City Hall'],
+  ['도서관','Library'],['체육관','Gymnasium'],['강당','Auditorium'],
+  ['복지관','Welfare Center'],['문화센터','Cultural Center'],
+  ['관광안내소','Tourist Info'],['보건소','Health Center'],
+  ['소방서','Fire Station'],['경찰서','Police Station'],
+  ['우체국','Post Office'],['주차장','Parking'],
+  ['공원','Park'],['광장','Plaza'],['상가','Plaza'],
+  ['프라자','Plaza'],['마트','Mart'],['편의점','Convenience Store'],
+  ['백화점','Department Store'],['쇼핑몰','Shopping Mall'],
+  ['아파트','Apt'],['빌딩','Bldg'],['센터','Center'],
+  ['병원','Hospital'],['의원','Clinic'],['약국','Pharmacy'],
+  ['초등학교','Elementary School'],['중학교','Middle School'],
+  ['고등학교','High School'],['대학교','University'],
+  ['유치원','Kindergarten'],['어린이집','Daycare'],
+  ['은행','Bank'],['역','Station'],['터미널','Terminal'],
+  ['지하철역','Subway Station'],['버스터미널','Bus Terminal'],
+  ['휴게소','Rest Area'],['주유소','Gas Station'],
+  ['충전소','Charging Station'],['골프장','Golf Course'],
+  ['수영장','Swimming Pool'],['운동장','Sports Field'],
+  // 방향/위치
+  ['입구','Entrance'],['출구','Exit'],['지하','Underground'],
+  ['앞','Front'],['뒤','Rear'],['옆','Side'],
+  ['1층','1F'],['2층','2F'],['3층','3F'],['4층','4F'],
+  // 시도 (긴 것 먼저)
+  ['서울특별시','Seoul'],['경기도','Gyeonggi'],
+  ['부산광역시','Busan'],['인천광역시','Incheon'],
+  ['대구광역시','Daegu'],['대전광역시','Daejeon'],
+  ['광주광역시','Gwangju'],['울산광역시','Ulsan'],
+  ['세종특별자치시','Sejong'],['강원특별자치도','Gangwon'],
+  ['충청북도','Chungbuk'],['충청남도','Chungnam'],
+  ['전라북도','Jeonbuk'],['전북특별자치도','Jeonbuk'],
+  ['전라남도','Jeonnam'],['경상북도','Gyeongbuk'],
+  ['경상남도','Gyeongnam'],['제주특별자치도','Jeju'],
+  // 주요 시/군/구
+  ['강남구','Gangnam-gu'],['서초구','Seocho-gu'],['송파구','Songpa-gu'],
+  ['강동구','Gangdong-gu'],['강서구','Gangseo-gu'],['강북구','Gangbuk-gu'],
+  ['마포구','Mapo-gu'],['용산구','Yongsan-gu'],['종로구','Jongno-gu'],
+  ['중구','Jung-gu'],['동대문구','Dongdaemun-gu'],['성동구','Seongdong-gu'],
+  ['광진구','Gwangjin-gu'],['중랑구','Jungnang-gu'],['노원구','Nowon-gu'],
+  ['도봉구','Dobong-gu'],['성북구','Seongbuk-gu'],['은평구','Eunpyeong-gu'],
+  ['서대문구','Seodaemun-gu'],['양천구','Yangcheon-gu'],['구로구','Guro-gu'],
+  ['금천구','Geumcheon-gu'],['영등포구','Yeongdeungpo-gu'],
+  ['동작구','Dongjak-gu'],['관악구','Gwanak-gu'],
+  ['수원시','Suwon'],['성남시','Seongnam'],['안양시','Anyang'],
+  ['부천시','Bucheon'],['고양시','Goyang'],['용인시','Yongin'],
+  ['파주시','Paju'],['김포시','Gimpo'],['하남시','Hanam'],
+  ['남양주시','Namyangju'],['의정부시','Uijeongbu'],
+  ['평택시','Pyeongtaek'],['안산시','Ansan'],['시흥시','Siheung'],
+  ['군포시','Gunpo'],['의왕시','Uiwang'],['오산시','Osan'],
+  ['이천시','Icheon'],['광명시','Gwangmyeong'],['구리시','Guri'],
+];
+
+function translateToEn(text){
+  if(!text||curLang!=='en') return text;
+  var r=text;
+  // 1단계: 사전 치환
+  KO_EN.forEach(function(pair){
+    r=r.replace(new RegExp(pair[0],'g'),pair[1]);
+  });
+  // 2단계: 남은 한글 단어를 로마자로 변환
+  r=r.replace(/[가-힣]+/g,function(match){
+    return romanize(match);
+  });
+  // 3단계: 첫 글자 대문자
+  r=r.replace(/(^|\s)([a-z])/g,function(m,p1,p2){return p1+p2.toUpperCase();});
+  return r;
+}
+
+// ── 유틸 ──────────────────────────────────────────────────
+var toastT;
+function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){el.classList.remove('show');},2800);}
+var isFirstLoad=true;
+function setLoad(v){
+  if(isFirstLoad){document.getElementById('loading').classList.toggle('show',v);}
+  else{document.getElementById('mini-loading').classList.toggle('show',v);}
+  if(!v&&isFirstLoad) isFirstLoad=false;
+}
+function showBS(v){} // 미사용
+
+// ── 상태 ──────────────────────────────────────────────────
+var map=null, kakaoPs=null, kakaoGc=null;
+var myLat=37.4979, myLng=127.0276;
+var allData=[], markers=[], curFilter='all';
+var publicData=null, curLocText='';
+
+// ── 언어 설정 ──────────────────────────────────────────────
+function setLang(lang){
+  curLang=lang; T=LANG[lang];
+  document.querySelectorAll('.lang-btn').forEach(function(b){
+    b.classList.toggle('active',b.textContent.indexOf(lang==='ko'?'한국어':'English')>-1);
+  });
+  document.getElementById('l-title').innerHTML=T.title;
+  document.getElementById('start-btn').textContent=T.startBtn;
+  document.getElementById('cnt-label').textContent=T.cntLabel;
+  var url=new URL(location.href);
+  if(lang==='en') url.searchParams.set('lang','en');
+  else url.searchParams.delete('lang');
+  history.replaceState(null,'',url.toString());
+}
+
+// ── 공공데이터 로드 ────────────────────────────────────────
+function loadPublicData(cb){
+  if(publicData){cb();return;}
+  fetch('./toilets.json').then(function(r){return r.json();}).then(function(d){
+    publicData=d; console.log('공공데이터:',d.length+'개'); cb();
+  }).catch(function(){publicData=[];cb();});
+}
+
+// ── 거리 계산 ──────────────────────────────────────────────
+function calcDist(la1,ln1,la2,ln2){
+  var R=6371000,dLa=(la2-la1)*Math.PI/180,dLn=(ln2-ln1)*Math.PI/180;
+  var a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLn/2)*Math.sin(dLn/2);
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+
+// ── 필터링 ─────────────────────────────────────────────────
+var EXCLUDE=['초등학교','중학교','고등학교','대학교','대학원','유치원','어린이집','특수학교','학교','군부대','부대','경찰서','교도소','막힘','뚫어','배관','하수구','싱크대','화장실수리','욕실용품','위생도기','세면대','화장품','미용실','마사지','청소','세탁','부동산','학원'];
+var VALID=['화장실','restroom','toilet','공중','개방','무료','공공','열린'];
+function isInvalid(name,addr,cat){
+  var s=(name||'')+' '+(addr||'')+' '+(cat||'');
+  if(EXCLUDE.some(function(k){return s.indexOf(k)>-1;})) return true;
+  var hasValid=VALID.some(function(k){return (name||'').toLowerCase().indexOf(k)>-1||(cat||'').toLowerCase().indexOf(k)>-1;});
+  return !hasValid;
+}
+
+// ── 시작 ──────────────────────────────────────────────────
+function startApp(){
+  document.getElementById('landing').classList.add('hide');
+  document.getElementById('mapscreen').classList.add('show');
+  loadPublicData(function(){});
+
+  // UI 업데이트
+  document.getElementById('srch-label').textContent=T.searchHint;
+  document.getElementById('fc-all').textContent=T.filterAll;
+  document.getElementById('fc-pub').textContent=T.filterPub;
+  document.getElementById('fc-opn').textContent=T.filterOpn;
+  document.getElementById('cnt-label').textContent=T.cntLabel;
+  document.getElementById('loading-txt').textContent=T.loading;
+  document.getElementById('srch-inp').placeholder=T.srchPlaceholder;
+  document.getElementById('leg-pub').textContent=T.legPub;
+  document.getElementById('leg-opn').textContent=T.legOpn;
+  document.getElementById('leg-goo').textContent=T.legGoo;
+
+  var wrap=document.getElementById('qp-wrap');
+  wrap.innerHTML='';
+  T.qp.forEach(function(q){
+    var b=document.createElement('button');b.className='qp';b.textContent=q;
+    b.onclick=function(){document.getElementById('srch-inp').value=q;doSearch();};
+    wrap.appendChild(b);
+  });
+
+  if(curLang==='en'){
+    var chk=setInterval(function(){
+      if(window.google&&window.google.maps&&window.google.maps.Map){clearInterval(chk);initMap();}
+    },100);
+  } else {
+    setTimeout(initMap,100);
+  }
+}
+
+// ── 지도 초기화 ────────────────────────────────────────────
+function initMap(){
+  var el=document.getElementById('kakaoMap');
+
+  if(curLang==='en'){
+    map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:18,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
+    var rt=null;
+    function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());},600);}
+    google.maps.event.addListener(map,'dragend',ar);
+    google.maps.event.addListener(map,'zoom_changed',ar);
+    goMyLoc();
+  } else {
+    kakao.maps.load(function(){
+      kakaoPs=new kakao.maps.services.Places();
+      kakaoGc=new kakao.maps.services.Geocoder();
+      map=new kakao.maps.Map(el,{center:new kakao.maps.LatLng(myLat,myLng),level:3});
+      map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
+      var rt=null;
+      function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.getLat(),c.getLng());searchNear(c.getLat(),c.getLng());},600);}
+      kakao.maps.event.addListener(map,'dragend',ar);
+      kakao.maps.event.addListener(map,'zoom_changed',ar);
+      goMyLoc();
+    });
+  }
+}
+
+// ── 줌 ────────────────────────────────────────────────────
+function zoomIn(){if(!map)return;if(curLang==='en')map.setZoom(map.getZoom()+1);else map.setLevel(map.getLevel()-1);}
+function zoomOut(){if(!map)return;if(curLang==='en')map.setZoom(map.getZoom()-1);else map.setLevel(map.getLevel()+1);}
+
+// ── 내 위치 ────────────────────────────────────────────────
+function goMyLoc(){
+  if(!map)return;
+  if(!navigator.geolocation){searchNear(myLat,myLng);return;}
+  var asked=localStorage.getItem('yam_loc');
+  if(!asked) toast(T.toastLoc);
+  navigator.geolocation.getCurrentPosition(function(pos){
+    localStorage.setItem('yam_loc','1');
+    myLat=pos.coords.latitude; myLng=pos.coords.longitude;
+    if(curLang==='en'){
+      map.setCenter({lat:myLat,lng:myLng}); map.setZoom(18);
+      new google.maps.Marker({position:{lat:myLat,lng:myLng},map:map,icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#2563eb',fillOpacity:1,strokeColor:'white',strokeWeight:3}});
+    } else {
+      map.setCenter(new kakao.maps.LatLng(myLat,myLng)); map.setLevel(3);
+      new kakao.maps.CustomOverlay({map:map,position:new kakao.maps.LatLng(myLat,myLng),zIndex:10,content:'<div style="width:16px;height:16px;border-radius:50%;background:#2563eb;border:3px solid white;box-shadow:0 2px 8px rgba(37,99,235,0.5);margin:-8px 0 0 -8px;"></div>'});
+    }
+    updateLoc(myLat,myLng);
+    searchNear(myLat,myLng);
+  },function(){toast(T.toastNoLoc);searchNear(myLat,myLng);},{timeout:8000,enableHighAccuracy:true,maximumAge:60000});
+}
+
+// ── 역지오코딩 ─────────────────────────────────────────────
+function updateLoc(lat,lng){
+  if(curLang==='en'){
+    new google.maps.Geocoder().geocode({location:{lat:lat,lng:lng},language:'en'},function(res,st){
+      if(st==='OK'&&res[0]){
+        var parts=res[0].address_components;
+        var sub=parts.find(function(p){return p.types.indexOf('sublocality_level_1')>-1;});
+        var city=parts.find(function(p){return p.types.indexOf('locality')>-1;});
+        curLocText=(sub?sub.long_name:'')+(city?' '+city.long_name:'');
+        document.getElementById('loc-txt').textContent=curLocText||res[0].formatted_address.split(',')[0];
+        document.getElementById('loc-pill').classList.add('show');
       }
-    };
+    });
+  } else {
+    if(!kakaoGc)return;
+    kakaoGc.coord2RegionCode(lng,lat,function(res,st){
+      if(st!==kakao.maps.services.Status.OK)return;
+      var d=res.find(function(r){return r.region_type==='H';})||res.find(function(r){return r.region_type==='B';});
+      if(!d)return;
+      curLocText=d.region_2depth_name+' '+d.region_3depth_name;
+      document.getElementById('loc-txt').textContent=curLocText;
+      document.getElementById('loc-pill').classList.add('show');
+    });
+  }
+}
 
-    let map = null;
-    let currentLat = 37.4979;
-    let currentLng = 127.0276;
-    let markers = [];
-    let currentBuildingId = null;
-    let tempRating = 0;
+// ── 화장실 검색 ────────────────────────────────────────────
+function searchNear(lat,lng){
+  if(!kakaoPs){setTimeout(function(){searchNear(lat,lng);},200);return;}
+  setLoad(true); clearMarkers(); allData=[];
+  var radius=800;
 
-    // 2. Core App Logic
-    function startApp() {
-      document.getElementById('landing').style.opacity = '0';
-      setTimeout(() => {
-        document.getElementById('landing').classList.add('hidden');
-        document.getElementById('mapscreen').classList.remove('hidden');
-        getLocationAndInitMap();
-      }, 500);
-    }
+  // 중복 체크
+  function isDup(y,x){
+    return allData.find(function(r){return calcDist(parseFloat(y),parseFloat(x),parseFloat(r.p.y||0),parseFloat(r.p.x||0))<20;});
+  }
 
-    function getLocationAndInitMap() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          pos => initMap(pos.coords.latitude, pos.coords.longitude, false),
-          () => initMap(37.4979, 127.0276, true), // fallback 강남역
-          { enableHighAccuracy: true, timeout: 8000 }
-        );
-      } else {
-        initMap(37.4979, 127.0276, true);
+  // 카카오 항목 추가
+  function addKakao(p,type){
+    var addr=p.road_address_name||p.address_name||'';
+    if(isInvalid(p.place_name,addr,p.category_name||''))return;
+    if(isDup(p.y,p.x))return;
+    allData.push({p:p,t:type,src:'kakao'});
+  }
+
+  // 공공데이터 항목 추가
+  function addPublic(){
+    if(!publicData||!publicData.length)return;
+    publicData.forEach(function(item){
+      var dist=calcDist(lat,lng,item.la,item.ln);
+      if(dist>radius)return;
+      if(isInvalid(item.n,item.a,item.t))return;
+      if(isDup(item.la,item.ln))return;
+      var t=item.t&&item.t.indexOf('개방')>-1?'open':'public';
+      allData.push({
+        p:{place_name:item.n||'공중화장실',road_address_name:item.a||'',address_name:item.a||'',phone:item.p||'',y:item.la,x:item.ln,distance:dist},
+        t:t,src:'public',h:item.h||''
+      });
+    });
+  }
+
+  // Google Places 항목 추가
+  function addGooglePlaces(cb){
+    if(!window.google||!window.google.maps){cb();return;}
+    google.maps.importLibrary('places').then(function(lib){
+      var Place=lib.Place;
+      var locText=curLocText||'';
+      var queries=[
+        '개방화장실 '+locText,
+        '열린화장실 '+locText,
+        '공중화장실 '+locText,
+      ];
+      var done=0;
+      queries.forEach(function(q){
+        Place.searchByText({
+          fields:['displayName','formattedAddress','location'],
+          textQuery:q.trim(),
+          language:'ko'
+        }).then(function(res){
+          (res.places||[]).forEach(function(place){
+            if(!place.location)return;
+            var pLat=place.location.lat(), pLng=place.location.lng();
+            var dist=calcDist(lat,lng,pLat,pLng);
+            if(dist>radius)return;
+            if(isDup(pLat,pLng))return;
+            allData.push({
+              p:{place_name:place.displayName||'개방화장실',road_address_name:place.formattedAddress||'',address_name:place.formattedAddress||'',phone:'',y:pLat,x:pLng,distance:dist},
+              t:'open',src:'google'
+            });
+          });
+          done++;
+          if(done>=queries.length)cb();
+        }).catch(function(){done++;if(done>=queries.length)cb();});
+      });
+    }).catch(function(){cb();});
+  }
+
+  // 카카오 키워드 검색 (6종)
+  var searches=[
+    {kw:'공중화장실',t:'public'},{kw:'개방화장실',t:'open'},
+    {kw:'화장실',t:'open'},{kw:'무료화장실',t:'open'},
+    {kw:'공중 화장실',t:'public'},{kw:'개방 화장실',t:'open'},
+  ];
+  var total=searches.length, done=0;
+  var kakaoCenter=new kakao.maps.LatLng(lat,lng);
+  var opt={location:kakaoCenter,radius:radius,size:15,sort:kakao.maps.services.SortBy.DISTANCE};
+
+  searches.forEach(function(s){
+    kakaoPs.keywordSearch(s.kw,function(data,st){
+      if(st===kakao.maps.services.Status.OK) data.forEach(function(p){addKakao(p,s.t);});
+      done++;
+      if(done>=total){
+        // 카카오 완료 → 공공데이터 추가 → Google 추가 → 렌더링
+        addPublic();
+        addGooglePlaces(function(){
+          setLoad(false);
+          allData.sort(function(a,b){return parseInt(a.p.distance||0)-parseInt(b.p.distance||0);});
+          renderMarkers();
+          var n=getFilt().length;
+          document.getElementById('cnt').textContent=n;
+          document.getElementById('count-pill').classList.toggle('show',n>0);
+          if(n===0) toast(T.toastNone);
+        });
       }
+    },opt);
+  });
+}
+
+// ── 마커 렌더링 ────────────────────────────────────────────
+function renderMarkers(){
+  clearMarkers();
+  getFilt().forEach(function(r,i){
+    var isPub=r.t==='public', isGoo=r.src==='google';
+    var cls=isGoo?'cm cm-goo':isPub?'cm cm-pub':'cm cm-opn';
+    var icon=isPub?'🚻':'🏢';
+    var dist=parseInt(r.p.distance||0);
+    var name=translateToEn(r.p.place_name);
+    var distTag=dist?'<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:'+(isGoo?'#fef3c7':isPub?'#eff6ff':'#ecfdf5')+';margin-left:2px;">'+dist+'m</span>':'';
+    var content='<div class="'+cls+'" onclick="openDetail('+i+')">'+icon+' '+name+distTag+'</div>';
+
+    if(curLang==='en'){
+      var ov=new google.maps.OverlayView();
+      (function(r2,idx,content2){
+        ov.onAdd=function(){
+          var div=document.createElement('div');
+          div.innerHTML=content2;
+          div.style.cssText='position:absolute;cursor:pointer;white-space:nowrap;transform:translate(-50%,-100%);margin-top:-8px;';
+          div.onclick=function(){openDetail(idx);};
+          ov._div=div;
+          ov.getPanes().overlayMouseTarget.appendChild(div);
+        };
+        ov.draw=function(){
+          var pt=ov.getProjection().fromLatLngToDivPixel(new google.maps.LatLng(parseFloat(r2.p.y),parseFloat(r2.p.x)));
+          if(pt&&ov._div){ov._div.style.left=pt.x+'px';ov._div.style.top=pt.y+'px';}
+        };
+        ov.onRemove=function(){if(ov._div){ov._div.parentNode.removeChild(ov._div);ov._div=null;}};
+        ov.setMap(map);
+        markers.push(ov);
+      })(r,i,content);
+    } else {
+      var ov=new kakao.maps.CustomOverlay({map:map,position:new kakao.maps.LatLng(r.p.y,r.p.x),content:content,yAnchor:1.5,zIndex:3});
+      markers.push(ov);
     }
+  });
+}
 
-    function initMap(lat, lng, isFallback) {
-      currentLat = lat; currentLng = lng;
-      document.getElementById('loading-overlay').classList.add('hidden');
-      document.getElementById('loc-text').textContent = isFallback ? '📍 강남역 · 기본 위치' : `📍 현재 위치 · ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+function getFilt(){
+  if(curFilter==='all')return allData;
+  return allData.filter(function(r){return r.t===curFilter;});
+}
+function clearMarkers(){markers.forEach(function(m){m.setMap(null);});markers=[];}
 
-      // Map Initialization
-      const container = document.getElementById('kakaoMap');
-      const options = { center: new kakao.maps.LatLng(lat, lng), level: 4 };
-      map = new kakao.maps.Map(container, options);
+// ── 필터 ──────────────────────────────────────────────────
+function setFilter(f){
+  curFilter=f;
+  ['all','pub','opn'].forEach(function(k){document.getElementById('fc-'+k).classList.remove('on');});
+  document.getElementById(f==='all'?'fc-all':f==='public'?'fc-pub':'fc-opn').classList.add('on');
+  renderMarkers();
+  var n=getFilt().length;
+  document.getElementById('cnt').textContent=n;
+  document.getElementById('count-pill').classList.toggle('show',n>0);
+}
 
-      // Current Location Overlay
-      const locContent = `<div style="position:relative;"><div class="blue-dot" style="position:absolute; top:-4px; left:-4px; width:16px; height:16px;"></div><div style="width:8px; height:8px; background:var(--blue); border-radius:50%; border:2px solid white; position:relative; z-index:1;"></div></div>`;
-      new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(lat, lng), content: locContent, yAnchor: 0.5, xAnchor: 0.5 });
+// ── 상세 시트 ──────────────────────────────────────────────
+function openDetail(i){
+  var r=getFilt()[i]; if(!r)return;
+  var p=r.p, isPub=r.t==='public', isGoo=r.src==='google';
+  var name=translateToEn(p.place_name);
+  var addr=translateToEn(p.road_address_name||p.address_name||'주소 정보 없음');
+  var dist=parseInt(p.distance||0);
+  var src=r.src==='public'?T.srcPublic:r.src==='google'?T.srcGoogle:T.srcKakao;
+  var typeLabel=isGoo?T.detGoogle:isPub?T.detPublic:T.detOpen;
+  var badgeCls=isGoo?'b-goo':isPub?'b-pub':'b-opn';
+  var openHour=r.h&&r.h!=='nan'?r.h:'';
+  var kakaoUrl='https://map.kakao.com/link/to/'+encodeURIComponent(p.place_name)+','+p.y+','+p.x;
+  var naverUrl='https://map.naver.com/v5/search/'+encodeURIComponent(p.place_name);
+  var walkLabel=dist<100?T.detNear:dist<300?T.detClose:T.detWalkable;
+  document.getElementById('sheet-body').innerHTML=
+    '<div class="det-type">'+typeLabel+'</div>'+
+    '<div class="det-name">'+name+'</div>'+
+    '<div class="det-addr">'+addr+'</div>'+
+    (dist?'<div class="dist-card"><div><div style="font-size:11px;color:#64748b;margin-bottom:2px;">'+T.detFrom+'</div><div class="dist-num">'+dist+'m</div></div><div class="dist-right"><div style="font-size:20px;margin-bottom:2px;">🚶</div><div class="dist-walk">'+walkLabel+'</div><div class="dist-min">~'+Math.ceil(dist/60)+T.detWalk+'</div></div></div>':'')+
+    '<div class="badges"><span class="badge '+badgeCls+'">'+typeLabel+'</span><span class="badge b-free">'+T.detFree+'</span></div>'+
+    '<div class="info-row"><div class="ii">📌</div><div class="il">'+T.detAddr+'</div><div class="iv">'+addr+'</div></div>'+
+    (openHour?'<div class="info-row"><div class="ii">🕐</div><div class="il">Hours</div><div class="iv">'+openHour+'</div></div>':'')+
+    (p.phone&&p.phone!=='nan'?'<div class="info-row"><div class="ii">📞</div><div class="il">'+T.detPhone+'</div><div class="iv">'+p.phone+'</div></div>':'')+
+    '<div class="info-row"><div class="ii">ℹ️</div><div class="il">'+T.detSrc+'</div><div class="iv">'+src+'</div></div>'+
+    '<div class="acts">'+
+    '<button class="act a-kakao" onclick="window.open(\''+kakaoUrl+'\',\'_blank\')">'+T.detKakao+'</button>'+
+    '<button class="act a-naver" onclick="window.open(\''+naverUrl+'\',\'_blank\')">'+T.detNaver+'</button>'+
+    '<button class="act a-copy" onclick="navigator.clipboard.writeText(\''+addr.replace(/'/g,"\\'")+'\').then(function(){toast(T.detCopied)})">'+T.detCopy+'</button>'+
+    '</div>';
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('sheet').classList.add('on');
+  if(curLang==='en') map.panTo({lat:parseFloat(p.y),lng:parseFloat(p.x)});
+  else map.panTo(new kakao.maps.LatLng(p.y,p.x));
+}
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('on');
+  document.getElementById('sheet').classList.remove('on');
+}
 
-      renderMarkers();
-    }
+// ── 검색 ──────────────────────────────────────────────────
+function openSrch(){document.getElementById('srch').classList.add('show');setTimeout(function(){document.getElementById('srch-inp').focus();},100);}
+function closeSrch(){document.getElementById('srch').classList.remove('show');}
+function doSearch(){
+  var q=document.getElementById('srch-inp').value.trim();
+  if(!q){toast(T.toastNoQ);return;}
+  document.getElementById('srch-label').textContent=q;
+  closeSrch();
+  kakaoPs.keywordSearch(q,function(data,st){
+    if(st===kakao.maps.services.Status.OK){
+      var lat=parseFloat(data[0].y), lng=parseFloat(data[0].x);
+      if(curLang==='en'){map.setCenter({lat:lat,lng:lng});map.setZoom(18);}
+      else{map.setCenter(new kakao.maps.LatLng(lat,lng));map.setLevel(3);}
+      updateLoc(lat,lng);
+      searchNear(lat,lng);
+    } else toast(T.toastNoRes);
+  });
+}
 
-    function renderMarkers() {
-      markers.forEach(m => m.setMap(null));
-      markers = [];
-      Object.keys(BUILDINGS).forEach(key => {
-        const b = BUILDINGS[key];
-        const content = document.createElement('div');
-        content.className = `custom-marker marker-${b.markerType}`;
-        content.innerHTML = `<span>${b.icon}</span> <span>${b.title}</span> <span style="color:var(--star)">★${b.rating}</span>`;
-        content.onclick = () => openBuildingSheet(key);
-
-        const overlay = new kakao.maps.CustomOverlay({ map, position: new kakao.maps.LatLng(b.lat, b.lng), content, yAnchor: 1.0, xAnchor: 0.5 });
-        markers.push(overlay);
-      });
-    }
-
-    function moveToCurrentLoc() {
-      if (map) map.panTo(new kakao.maps.LatLng(currentLat, currentLng));
-    }
-
-    // 3. UI Interactions (Sheets)
-    function closeAllSheets() {
-      document.getElementById('sheet-overlay').classList.remove('active');
-      document.getElementById('rec-sheet').classList.remove('active');
-      document.getElementById('detail-sheet').classList.remove('active');
-    }
-
-    function openRecSheet() {
-      closeAllSheets();
-      document.getElementById('sheet-overlay').classList.add('active');
-      document.getElementById('rec-sheet').classList.add('active');
-      applyFilter('all');
-    }
-
-    let currentFilter = 'all';
-    function applyFilter(filterType) {
-      currentFilter = filterType;
-      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-      event && event.target && event.target.classList.add('active');
-
-      let arr = Object.values(BUILDINGS);
-      if (filterType === 'open') arr = arr.filter(b => b.isPublic || b.isFree);
-      if (filterType === 'tissue') arr = arr.filter(b => b.hasTissue);
-      if (filterType === 'free') arr = arr.filter(b => b.isFree);
-      if (filterType === 'high') arr.sort((a,b) => b.rating - a.rating);
-
-      arr.forEach(b => {
-        let s = b.rating * 20;
-        if (b.isPublic) s += 15;
-        if (b.isFree) s += 10;
-        if (b.hasTissue) s += 8;
-        b._score = s;
-      });
-
-      if (filterType !== 'high') arr.sort((a,b) => b._score - a._score);
-      renderRecCards(arr.slice(0, 3));
-    }
-
-    function renderRecCards(buildings) {
-      const container = document.getElementById('rec-content');
-      container.innerHTML = '';
-      if (!buildings.length) { container.innerHTML = '<div style="text-align:center; padding:40px 0; color:var(--muted);">조건에 맞는 화장실이 없습니다.</div>'; return; }
-
-      buildings.forEach((b, i) => {
-        const rank = i + 1;
-        const metaHtml = b.meta.map(m => `<span class="meta-tag">${m}</span>`).join('');
-        const html = `
-          <div class="rec-card rank-${rank}">
-            <div class="card-top">
-              <div class="card-title-box"><span style="font-size:18px;">${b.icon}</span><span class="card-title">${b.title}</span></div>
-              <div class="rank-badge rank-${rank}-badge">${rank}위</div>
-            </div>
-            <div class="card-addr">${b.addr} <span class="card-dist">📍 약 ${b.dist}</span></div>
-            <div class="card-rating">★★★★★ ${b.rating} <span style="color:var(--muted); font-weight:400; font-size:12px;">(${b.ratingCount}명)</span></div>
-            <div class="card-meta">${metaHtml}</div>
-            <div class="card-actions">
-              <button class="action-btn btn-primary" onclick="viewFromRec('${b.id}')">🗺 자세히 보기</button>
-              <button class="action-btn btn-secondary" onclick="openRatingFromRec('${b.id}')">⭐ 평가하기</button>
-            </div>
-          </div>`;
-        container.innerHTML += html;
-      });
-    }
-
-    function viewFromRec(id) {
-      const b = BUILDINGS[id];
-      if (map) map.panTo(new kakao.maps.LatLng(b.lat, b.lng));
-      openBuildingSheet(id);
-    }
-
-    function openRatingFromRec(id) { currentBuildingId = id; openRatingModal(); }
-
-    function openBuildingSheet(id) {
-      currentBuildingId = id; const b = BUILDINGS[id];
-      closeAllSheets();
-      document.getElementById('sheet-overlay').classList.add('active');
-      document.getElementById('detail-sheet').classList.add('active');
-
-      // Update Header
-      document.getElementById('det-tag').textContent = b.tag;
-      document.getElementById('det-title').textContent = `${b.icon} ${b.title}`;
-      document.getElementById('det-addr').textContent = `${b.addr} · 약 ${b.dist}`;
-      
-      // Update Rating UI
-      document.getElementById('det-rating-val').textContent = b.rating;
-      document.getElementById('det-rating-cnt').textContent = `(${b.ratingCount}명)`;
-      document.getElementById('det-stars').innerHTML = getStarHtml(b.rating);
-
-      document.getElementById('det-meta').innerHTML = b.meta.map((m, i) => `<span class="meta-tag" style="${i===0?'background:var(--teal-light); color:var(--teal2);':''}">${m}</span>`).join('');
-
-      // Update Floors
-      const fContainer = document.getElementById('det-floors');
-      fContainer.innerHTML = '';
-      b.floors.forEach((f, idx) => {
-        let pwBadge = f.pw ? `<div class="floor-pw-badge pw-badge-gold">🔑 ${f.pw}</div>` : `<div class="floor-pw-badge pw-badge-none">${f.status==='red'?'정보없음':'비밀번호 없음'}</div>`;
-        let statusText = f.tissue ? '🧻 휴지있음' : '❌ 휴지없음';
-        let confColor = f.conf >= 80 ? 'green' : (f.conf >= 50 ? 'yellow' : 'red');
-        let confText = f.conf >= 80 ? '🟢 인증 완료' : (f.conf >= 50 ? '🟡 일부 확인' : '🔴 확인 필요');
-
-        fContainer.innerHTML += `
-          <div class="floor-card">
-            <div class="floor-header" onclick="toggleFloorDetail(${idx})">
-              <div class="floor-info-left">
-                <div class="floor-badge badge-${f.status}">${f.badge}</div>
-                <div class="floor-name-wrap">
-                  <div class="floor-name">${f.label}</div>
-                  <div class="floor-status-text">${statusText} · <span style="color:var(--${f.status})">●</span></div>
-                </div>
-              </div>
-              ${pwBadge}
-            </div>
-            <div class="floor-detail" id="floor-detail-${idx}">
-              <div class="pw-box-large">
-                <div class="pw-box-left">
-                  <div class="pw-label">비밀번호</div>
-                  <div class="pw-value ${f.pw ? '' : 'no-pw'}">${f.pw || (f.status==='red'?'정보 없음':'필요 없음')}</div>
-                </div>
-                <div class="pw-box-right">
-                  <div class="pw-label" style="margin-bottom:4px;">정보 신뢰도</div>
-                  <div class="conf-status conf-${confColor}">${confText} (${f.conf}%)</div>
-                </div>
-              </div>
-              <div class="conf-bar-wrap"><div class="conf-bar ${confColor}" style="width: ${f.conf}%"></div></div>
-              <button class="report-btn" onclick="openReportModal('${f.label}')">✏️ 비밀번호 수정 제보하기</button>
-            </div>
-          </div>`;
-      });
-    }
-
-    function getStarHtml(rating) {
-      let stars = '';
-      for(let i=1; i<=5; i++) stars += i <= Math.round(rating) ? '★' : '☆';
-      return stars;
-    }
-
-    function toggleFloorDetail(idx) { document.getElementById(`floor-detail-${idx}`).classList.toggle('open'); }
-
-    // 4. Modals
-    function openRatingModal() {
-      tempRating = 0; updateStarUI(0);
-      document.getElementById('rating-target-name').textContent = BUILDINGS[currentBuildingId].title;
-      document.getElementById('rating-modal').classList.add('active');
-    }
-
-    function setTempRating(val) {
-      tempRating = val; updateStarUI(val);
-      const labels = ['별점을 선택해주세요', '별로예요 😠', '그저 그래요 😕', '보통이에요 😐', '맘에 들어요 🙂', '최고예요! 🤩'];
-      document.getElementById('rating-label').textContent = labels[val];
-    }
-
-    function updateStarUI(val) {
-      document.querySelectorAll('#star-select span').forEach((s, i) => {
-        i < val ? s.classList.add('active') : s.classList.remove('active');
-      });
-    }
-
-    function submitRating() {
-      if (tempRating === 0) return showToast('별점을 선택해주세요!');
-      const b = BUILDINGS[currentBuildingId];
-      b.rating = Math.round(((b.rating * b.ratingCount + tempRating) / (++b.ratingCount)) * 10) / 10;
-      
-      closeModal(null, 'rating-modal');
-      showToast(`✅ ★${tempRating} 평가가 반영됐어요!`);
-      
-      if (document.getElementById('detail-sheet').classList.contains('active')) openBuildingSheet(currentBuildingId);
-      else if (document.getElementById('rec-sheet').classList.contains('active')) applyFilter(currentFilter);
-      renderMarkers();
-    }
-
-    function openReportModal(floorName) {
-      document.getElementById('report-target-name').textContent = `[${floorName}]`;
-      document.getElementById('report-input').value = '';
-      document.getElementById('report-modal').classList.add('active');
-    }
-
-    function submitReport() {
-      const val = document.getElementById('report-input').value;
-      if (val.length < 3) return showToast('비밀번호를 정확히 입력해주세요.');
-      closeModal(null, 'report-modal');
-      showToast('✅ 제보 완료! 3명 이상 동일 입력 시 반영됩니다.');
-    }
-
-    function closeModal(e, id) { if (!e || e.target.id === id) document.getElementById(id).classList.remove('active'); }
-
-    // 5. Toast
-    let toastTimeout;
-    function showToast(msg) {
-      const el = document.getElementById('toast');
-      el.textContent = msg; el.classList.add('show');
-      clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => el.classList.remove('show'), 2800);
-    }
-
-    // 6. PWA Registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}));
-    }
-  </script>
+// ── DOMContentLoaded ───────────────────────────────────────
+document.addEventListener('DOMContentLoaded',function(){
+  setLang(curLang);
+  document.getElementById('srch-inp').addEventListener('keydown',function(e){if(e.key==='Enter')doSearch();});
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(r){console.log('SW:',r.scope);})
+      .catch(function(){});
+  }
+});
+</script>
 </body>
 </html>
