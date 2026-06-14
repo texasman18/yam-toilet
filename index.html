@@ -473,7 +473,12 @@ function startApp(){
       if(window.google&&window.google.maps&&window.google.maps.Map){clearInterval(chk);initMap();}
     },100);
   } else {
-    setTimeout(initMap,100);
+    var kakaoChk=setInterval(function(){
+      if(window.kakao&&window.kakao.maps){clearInterval(kakaoChk);initMap();}
+    },100);
+    setTimeout(function(){
+      if(!map){clearInterval(kakaoChk);curLang='en';initMap();}
+    },5000);
   }
 }
 
@@ -482,12 +487,17 @@ function initMap(){
   var el=document.getElementById('kakaoMap');
 
   if(curLang==='en'){
-    map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:18,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
-    var rt=null;
-    function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());},600);}
-    google.maps.event.addListener(map,'dragend',ar);
-    google.maps.event.addListener(map,'zoom_changed',ar);
-    goMyLoc();
+    var chk2=setInterval(function(){
+      if(window.google&&window.google.maps&&window.google.maps.Map){
+        clearInterval(chk2);
+        map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:18,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
+        var rt=null;
+        function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());},600);}
+        google.maps.event.addListener(map,'dragend',ar);
+        google.maps.event.addListener(map,'zoom_changed',ar);
+        goMyLoc();
+      }
+    },100);
   } else {
     kakao.maps.load(function(){
       kakaoPs=new kakao.maps.services.Places();
