@@ -500,15 +500,44 @@ function initMap(){
     },100);
   } else {
     kakao.maps.load(function(){
-      kakaoPs=new kakao.maps.services.Places();
-      kakaoGc=new kakao.maps.services.Geocoder();
-      map=new kakao.maps.Map(el,{center:new kakao.maps.LatLng(myLat,myLng),level:3});
-      map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
-      var rt=null;
-      function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.getLat(),c.getLng());searchNear(c.getLat(),c.getLng());},600);}
-      kakao.maps.event.addListener(map,'dragend',ar);
-      kakao.maps.event.addListener(map,'zoom_changed',ar);
-      goMyLoc();
+      try {
+        kakaoPs=new kakao.maps.services.Places();
+        kakaoGc=new kakao.maps.services.Geocoder();
+        map=new kakao.maps.Map(el,{center:new kakao.maps.LatLng(myLat,myLng),level:3});
+        map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
+        var rt=null;
+        function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.getLat(),c.getLng());searchNear(c.getLat(),c.getLng());},600);}
+        kakao.maps.event.addListener(map,'dragend',ar);
+        kakao.maps.event.addListener(map,'zoom_changed',ar);
+        // 3초 후 지도 타일 렌더링 확인 — 안됐으면 Google Maps로 전환
+        setTimeout(function(){
+          var canvas=el.querySelector('canvas');
+          if(!canvas||canvas.width===0){
+            map=null; curLang='en'; el.innerHTML='';
+            var chkG=setInterval(function(){
+              if(window.google&&window.google.maps&&window.google.maps.Map){
+                clearInterval(chkG);
+                map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:18,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
+                google.maps.event.addListener(map,'dragend',function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());});
+                google.maps.event.addListener(map,'zoom_changed',function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());});
+                goMyLoc();
+              }
+            },100);
+          }
+        },3000);
+        goMyLoc();
+      } catch(e) {
+        map=null; curLang='en'; el.innerHTML='';
+        var chkG2=setInterval(function(){
+          if(window.google&&window.google.maps&&window.google.maps.Map){
+            clearInterval(chkG2);
+            map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:18,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
+            google.maps.event.addListener(map,'dragend',function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());});
+            google.maps.event.addListener(map,'zoom_changed',function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());});
+            goMyLoc();
+          }
+        },100);
+      }
     });
   }
 }
