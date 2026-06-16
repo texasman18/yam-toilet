@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>얌 - 내 주변 화장실</title>
   <link rel="icon" href="/icons/icon-192.png" type="image/png">
   <link rel="shortcut icon" href="/icons/icon-192.png" type="image/png">
@@ -52,7 +52,7 @@
     #kakaoMap{position:absolute;inset:0;width:100%!important;height:100%!important;}
 
     /* ── 상단바 ── */
-    .topbar{position:absolute;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(to bottom,rgba(255,255,255,0.97) 70%,transparent);pointer-events:none;}
+    .topbar{position:absolute;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px 14px;background:linear-gradient(to bottom,rgba(255,255,255,0.97) 70%,transparent);pointer-events:none;}
     .topbar>*{pointer-events:auto;}
     .logo-sm{width:38px;height:38px;border-radius:12px;overflow:hidden;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,0.12);}
     .logo-sm img{width:100%;height:100%;object-fit:cover;}
@@ -476,9 +476,6 @@ function startApp(){
     var kakaoChk=setInterval(function(){
       if(window.kakao&&window.kakao.maps){clearInterval(kakaoChk);initMap();}
     },100);
-    setTimeout(function(){
-      if(!map){clearInterval(kakaoChk);curLang='en';initMap();}
-    },5000);
   }
 }
 
@@ -500,44 +497,15 @@ function initMap(){
     },100);
   } else {
     kakao.maps.load(function(){
-      try {
-        kakaoPs=new kakao.maps.services.Places();
-        kakaoGc=new kakao.maps.services.Geocoder();
-        map=new kakao.maps.Map(el,{center:new kakao.maps.LatLng(myLat,myLng),level:3});
-        map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
-        var rt=null;
-        function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.getLat(),c.getLng());searchNear(c.getLat(),c.getLng());},600);}
-        kakao.maps.event.addListener(map,'dragend',ar);
-        kakao.maps.event.addListener(map,'zoom_changed',ar);
-        // 3초 후 지도 타일 렌더링 확인 — 안됐으면 Google Maps로 전환
-        setTimeout(function(){
-          var canvas=el.querySelector('canvas');
-          if(!canvas||canvas.width===0){
-            map=null; curLang='en'; el.innerHTML='';
-            var chkG=setInterval(function(){
-              if(window.google&&window.google.maps&&window.google.maps.Map){
-                clearInterval(chkG);
-                map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:18,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
-                google.maps.event.addListener(map,'dragend',function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());});
-                google.maps.event.addListener(map,'zoom_changed',function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());});
-                goMyLoc();
-              }
-            },100);
-          }
-        },3000);
-        goMyLoc();
-      } catch(e) {
-        map=null; curLang='en'; el.innerHTML='';
-        var chkG2=setInterval(function(){
-          if(window.google&&window.google.maps&&window.google.maps.Map){
-            clearInterval(chkG2);
-            map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:18,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
-            google.maps.event.addListener(map,'dragend',function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());});
-            google.maps.event.addListener(map,'zoom_changed',function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());});
-            goMyLoc();
-          }
-        },100);
-      }
+      kakaoPs=new kakao.maps.services.Places();
+      kakaoGc=new kakao.maps.services.Geocoder();
+      map=new kakao.maps.Map(el,{center:new kakao.maps.LatLng(myLat,myLng),level:3});
+      map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
+      var rt=null;
+      function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.getLat(),c.getLng());searchNear(c.getLat(),c.getLng());},600);}
+      kakao.maps.event.addListener(map,'dragend',ar);
+      kakao.maps.event.addListener(map,'zoom_changed',ar);
+      goMyLoc();
     });
   }
 }
