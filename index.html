@@ -18,7 +18,7 @@
   <meta property="og:image" content="/icons/icon-512.png">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
   <!-- 카카오맵 SDK -->
-  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=f59ba786d95984d04a6269d4e1e86bf3&libraries=services,geocoder&autoload=false"></script>
+  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=f59ba786d95984d04a6269d4e1e86bf3&libraries=services,geocoder"></script>
   <!-- Google Maps SDK -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAplYXuzjhjgi-f-M_zR3qahJ-KehNhD1g&libraries=places&language=en&region=KR" async defer></script>
   <script>var _urlLang=new URLSearchParams(location.search).get('lang')||'ko';</script>
@@ -52,7 +52,7 @@
     #kakaoMap{position:absolute;inset:0;width:100%!important;height:100%!important;}
 
     /* ── 상단바 ── */
-    .topbar{position:absolute;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px 12px 14px;background:linear-gradient(to bottom,rgba(255,255,255,0.97) 70%,transparent);pointer-events:none;}
+    .topbar{position:absolute;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px;background:linear-gradient(to bottom,rgba(255,255,255,0.97) 70%,transparent);pointer-events:none;}
     .topbar>*{pointer-events:auto;}
     .logo-sm{width:38px;height:38px;border-radius:12px;overflow:hidden;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,0.12);}
     .logo-sm img{width:100%;height:100%;object-fit:cover;}
@@ -473,41 +473,31 @@ function startApp(){
       if(window.google&&window.google.maps&&window.google.maps.Map){clearInterval(chk);initMap();}
     },100);
   } else {
-    var kakaoChk=setInterval(function(){
-      if(window.kakao&&window.kakao.maps){clearInterval(kakaoChk);initMap();}
-    },100);
+    setTimeout(initMap,100);
   }
 }
 
 // ── 지도 초기화 ────────────────────────────────────────────
 function initMap(){
   var el=document.getElementById('kakaoMap');
+  kakaoPs=new kakao.maps.services.Places();
+  kakaoGc=new kakao.maps.services.Geocoder();
 
   if(curLang==='en'){
-    var chk2=setInterval(function(){
-      if(window.google&&window.google.maps&&window.google.maps.Map){
-        clearInterval(chk2);
-        map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:18,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
-        var rt=null;
-        function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());},600);}
-        google.maps.event.addListener(map,'dragend',ar);
-        google.maps.event.addListener(map,'zoom_changed',ar);
-        goMyLoc();
-      }
-    },100);
+    map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:18,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
+    var rt=null;
+    function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());},600);}
+    google.maps.event.addListener(map,'dragend',ar);
+    google.maps.event.addListener(map,'zoom_changed',ar);
   } else {
-    kakao.maps.load(function(){
-      kakaoPs=new kakao.maps.services.Places();
-      kakaoGc=new kakao.maps.services.Geocoder();
-      map=new kakao.maps.Map(el,{center:new kakao.maps.LatLng(myLat,myLng),level:3});
-      map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
-      var rt=null;
-      function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.getLat(),c.getLng());searchNear(c.getLat(),c.getLng());},600);}
-      kakao.maps.event.addListener(map,'dragend',ar);
-      kakao.maps.event.addListener(map,'zoom_changed',ar);
-      goMyLoc();
-    });
+    map=new kakao.maps.Map(el,{center:new kakao.maps.LatLng(myLat,myLng),level:3});
+    map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
+    var rt=null;
+    function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.getLat(),c.getLng());searchNear(c.getLat(),c.getLng());},600);}
+    kakao.maps.event.addListener(map,'dragend',ar);
+    kakao.maps.event.addListener(map,'zoom_changed',ar);
   }
+  goMyLoc();
 }
 
 // ── 줌 ────────────────────────────────────────────────────
