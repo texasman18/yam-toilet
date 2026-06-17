@@ -563,7 +563,7 @@ function updateLoc(lat,lng){
 
 // ── 화장실 검색 ────────────────────────────────────────────
 function searchNear(lat,lng){
-  if(!kakaoPs){setTimeout(function(){searchNear(lat,lng);},200);return;}
+  if(curLang!=='en'&&!kakaoPs){setTimeout(function(){searchNear(lat,lng);},200);return;}
   setLoad(true); clearMarkers(); allData=[];
   var radius=800;
 
