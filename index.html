@@ -639,6 +639,18 @@ function searchNear(lat,lng){
     {kw:'공중 화장실',t:'public'},{kw:'개방 화장실',t:'open'},
   ];
   var total=searches.length, done=0;
+  if(curLang==='en'){
+    // 영어 모드: 카카오 검색 건너뜀
+    addPublic();
+    addGooglePlaces(function(){
+      setLoad(false);
+      allData.sort(function(a,b){return parseInt(a.p.distance||0)-parseInt(b.p.distance||0);});
+      renderMarkers();
+      if(typeof cb==='function')cb();
+    });
+    return;
+  }
+
   var kakaoCenter=new kakao.maps.LatLng(lat,lng);
   var opt={location:kakaoCenter,radius:radius,size:15,sort:kakao.maps.services.SortBy.DISTANCE};
 
