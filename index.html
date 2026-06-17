@@ -18,20 +18,7 @@
   <meta property="og:image" content="/icons/icon-512.png">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
   <!-- 카카오맵 SDK -->
-  <script>
-  (function(){
-    var s=document.createElement('script');
-    s.type='text/javascript';
-    s.src='https://dapi.kakao.com/v2/maps/sdk.js?appkey=f59ba786d95984d04a6269d4e1e86bf3&libraries=services,geocoder&autoload=false';
-    s.onload=function(){
-      kakao.maps.load(function(){
-        window._kakaoReady=true;
-        if(window._kakaoCallback) window._kakaoCallback();
-      });
-    };
-    document.head.appendChild(s);
-  })();
-  </script>
+  <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=f59ba786d95984d04a6269d4e1e86bf3&libraries=services,geocoder"></script>
   <!-- Google Maps SDK -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAplYXuzjhjgi-f-M_zR3qahJ-KehNhD1g&libraries=places&language=en&region=KR" async defer></script>
   <script>var _urlLang=new URLSearchParams(location.search).get('lang')||'ko';</script>
@@ -513,11 +500,13 @@ function initMap(){
       kakao.maps.event.addListener(map,'zoom_changed',ar);
       goMyLoc();
     }
-    if(window._kakaoReady){
-      initKakao();
-    } else {
-      window._kakaoCallback=initKakao;
-    }
+    // Kakao SDK 로드 완료 대기
+    var kakaoWait=setInterval(function(){
+      if(window.kakao&&window.kakao.maps&&window.kakao.maps.services){
+        clearInterval(kakaoWait);
+        initKakao();
+      }
+    },100);
   }
 }
 
