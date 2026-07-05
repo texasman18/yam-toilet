@@ -188,7 +188,7 @@
     <button class="start-btn" id="start-btn" onclick="startApp()">📍 내 주변 화장실 찾기</button>
   </div>
   <div class="powered">Powered by 테크셀</div>
-  <div class="contact">문의 : <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="add9c8d5ccdec0ccc3edc3ccdbc8df83cec2c0">[email&#160;protected]</a></div>
+  <div class="contact">문의 : <a href="mailto:texasman@naver.com" style="color:inherit;">texasman@naver.com</a></div>
 </div>
 
 <!-- 지도화면 -->
@@ -247,7 +247,7 @@
 
 <div id="toast"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ── 다국어 ────────────────────────────────────────────────
 var LANG={
   ko:{
@@ -396,6 +396,11 @@ function translateToEn(text){
 }
 
 // ── 유틸 ──────────────────────────────────────────────────
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
 var toastT;
 function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){el.classList.remove('show');},2800);}
 var isFirstLoad=true;
@@ -408,7 +413,7 @@ function setLoad(v){
 // ── 상태 ──────────────────────────────────────────────────
 var map=null, kakaoPs=null, kakaoGc=null;
 var myLat=37.4979, myLng=127.0276;
-var allData=[], markers=[], curFilter='all';
+var allData=[], markers=[], curFilter='all', myLocMarker=null;
 var publicData=null, curLocText='';
 
 // ── 언어 설정 ──────────────────────────────────────────────
@@ -490,10 +495,22 @@ function updateToggleUI(){
   }
 }
 
+// ── Kakao 서비스 보장 (영어 모드에서도 검색은 Kakao Places 사용) ──
+function ensureKakaoServices(){
+  if(kakaoPs&&kakaoGc)return true;
+  if(window.kakao&&window.kakao.maps&&window.kakao.maps.services){
+    kakaoPs=new kakao.maps.services.Places();
+    kakaoGc=new kakao.maps.services.Geocoder();
+    return true;
+  }
+  return false;
+}
+
 // ── 지도 전환 ─────────────────────────────────────────────
 function switchMap(lang){
   var el=document.getElementById('kakaoMap');
   clearMarkers();
+  if(myLocMarker){try{myLocMarker.setMap(null);}catch(e){} myLocMarker=null;}
 
   // 현재 지도 중심 좌표 가져오기
   var lat=myLat, lng=myLng;
@@ -508,10 +525,12 @@ function switchMap(lang){
   } catch(e){}
 
   if(lang==='en'){
+    ensureKakaoServices();
     // Google Maps 로드 대기 후 초기화
     var chk=setInterval(function(){
       if(window.google&&window.google.maps&&window.google.maps.Map){
         clearInterval(chk);
+        el.innerHTML='';
         map=new google.maps.Map(el,{
           center:{lat:lat,lng:lng},
           zoom:18,
@@ -534,6 +553,7 @@ function switchMap(lang){
     // 카카오맵 재초기화
     kakaoPs=new kakao.maps.services.Places();
     kakaoGc=new kakao.maps.services.Geocoder();
+    el.innerHTML='';
     map=new kakao.maps.Map(el,{center:new kakao.maps.LatLng(lat,lng),level:3});
     map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
     var rt=null;
@@ -615,6 +635,7 @@ function initMap(){
   var el=document.getElementById('kakaoMap');
 
   if(curLang==='en'){
+    ensureKakaoServices();
     map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:18,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
     var rt=null;
     function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());},600);}
@@ -655,12 +676,13 @@ function goMyLoc(){
   navigator.geolocation.getCurrentPosition(function(pos){
     localStorage.setItem('yam_loc','1');
     myLat=pos.coords.latitude; myLng=pos.coords.longitude;
+    if(myLocMarker){try{myLocMarker.setMap(null);}catch(e){} myLocMarker=null;}
     if(curLang==='en'){
       map.setCenter({lat:myLat,lng:myLng}); map.setZoom(18);
-      new google.maps.Marker({position:{lat:myLat,lng:myLng},map:map,icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#00754A',fillOpacity:1,strokeColor:'white',strokeWeight:3}});
+      myLocMarker=new google.maps.Marker({position:{lat:myLat,lng:myLng},map:map,icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#00754A',fillOpacity:1,strokeColor:'white',strokeWeight:3}});
     } else {
       map.setCenter(new kakao.maps.LatLng(myLat,myLng)); map.setLevel(3);
-      new kakao.maps.CustomOverlay({map:map,position:new kakao.maps.LatLng(myLat,myLng),zIndex:10,content:'<div style="width:16px;height:16px;border-radius:50%;background:#00754A;border:3px solid white;box-shadow:0 2px 8px rgba(0,117,74,0.5);margin:-8px 0 0 -8px;"></div>'});
+      myLocMarker=new kakao.maps.CustomOverlay({map:map,position:new kakao.maps.LatLng(myLat,myLng),zIndex:10,content:'<div style="width:16px;height:16px;border-radius:50%;background:#00754A;border:3px solid white;box-shadow:0 2px 8px rgba(0,117,74,0.5);margin:-8px 0 0 -8px;"></div>'});
     }
     updateLoc(myLat,myLng);
     searchNear(myLat,myLng);
@@ -768,6 +790,10 @@ function searchNear(lat,lng){
       setLoad(false);
       allData.sort(function(a,b){return parseInt(a.p.distance||0)-parseInt(b.p.distance||0);});
       renderMarkers();
+      var n=getFilt().length;
+      document.getElementById('cnt').textContent=n;
+      document.getElementById('count-pill').classList.toggle('show',n>0);
+      if(n===0) toast(T.toastNone);
     });
     return;
   }
@@ -803,7 +829,7 @@ function renderMarkers(){
     var cls=isGoo?'cm cm-goo':isPub?'cm cm-pub':'cm cm-opn';
     var icon=isPub?'🚻':'🏢';
     var dist=parseInt(r.p.distance||0);
-    var name=translateToEn(r.p.place_name);
+    var name=esc(translateToEn(r.p.place_name));
     var distTag=dist?'<span style="font-size:10px;padding:1px 6px;border-radius:50px;background:'+(isGoo?'#faf0d8':isPub?'#dbeeff':'#d4e9e2')+';margin-left:2px;">'+dist+'m</span>':'';
     var content='<div class="'+cls+'" onclick="openDetail('+i+')">'+icon+' '+name+distTag+'</div>';
 
@@ -854,13 +880,15 @@ function setFilter(f){
 function openDetail(i){
   var r=getFilt()[i]; if(!r)return;
   var p=r.p, isPub=r.t==='public', isGoo=r.src==='google';
-  var name=translateToEn(p.place_name);
-  var addr=translateToEn(p.road_address_name||p.address_name||'주소 정보 없음');
+  var name=esc(translateToEn(p.place_name));
+  var addrRaw=translateToEn(p.road_address_name||p.address_name||'주소 정보 없음');
+  var addr=esc(addrRaw);
+  var addrEnc=encodeURIComponent(addrRaw).replace(/'/g,'%27');
   var dist=parseInt(p.distance||0);
   var src=r.src==='public'?T.srcPublic:r.src==='google'?T.srcGoogle:T.srcKakao;
   var typeLabel=isGoo?T.detGoogle:isPub?T.detPublic:T.detOpen;
   var badgeCls=isGoo?'b-goo':isPub?'b-pub':'b-opn';
-  var openHour=r.h&&r.h!=='nan'?r.h:'';
+  var openHour=r.h&&r.h!=='nan'?esc(r.h):'';
   var kakaoUrl='https://map.kakao.com/link/to/'+encodeURIComponent(p.place_name)+','+p.y+','+p.x;
   var naverUrl='https://map.naver.com/v5/search/'+encodeURIComponent(p.place_name);
   var walkLabel=dist<100?T.detNear:dist<300?T.detClose:T.detWalkable;
@@ -872,12 +900,12 @@ function openDetail(i){
     '<div class="badges"><span class="badge '+badgeCls+'">'+typeLabel+'</span><span class="badge b-free">'+T.detFree+'</span></div>'+
     '<div class="info-row"><div class="ii">📌</div><div class="il">'+T.detAddr+'</div><div class="iv">'+addr+'</div></div>'+
     (openHour?'<div class="info-row"><div class="ii">🕐</div><div class="il">Hours</div><div class="iv">'+openHour+'</div></div>':'')+
-    (p.phone&&p.phone!=='nan'?'<div class="info-row"><div class="ii">📞</div><div class="il">'+T.detPhone+'</div><div class="iv">'+p.phone+'</div></div>':'')+
+    (p.phone&&p.phone!=='nan'?'<div class="info-row"><div class="ii">📞</div><div class="il">'+T.detPhone+'</div><div class="iv">'+esc(p.phone)+'</div></div>':'')+
     '<div class="info-row"><div class="ii">ℹ️</div><div class="il">'+T.detSrc+'</div><div class="iv">'+src+'</div></div>'+
     '<div class="acts">'+
     '<button class="act a-kakao" onclick="window.open(\''+kakaoUrl+'\',\'_blank\')">'+T.detKakao+'</button>'+
     '<button class="act a-naver" onclick="window.open(\''+naverUrl+'\',\'_blank\')">'+T.detNaver+'</button>'+
-    '<button class="act a-copy" onclick="navigator.clipboard.writeText(\''+addr.replace(/'/g,"\\'")+'\').then(function(){toast(T.detCopied)})">'+T.detCopy+'</button>'+
+    '<button class="act a-copy" onclick="navigator.clipboard.writeText(decodeURIComponent(\''+addrEnc+'\')).then(function(){toast(T.detCopied)})">'+T.detCopy+'</button>'+
     '</div>';
   document.getElementById('overlay').classList.add('on');
   document.getElementById('sheet').classList.add('on');
@@ -897,6 +925,7 @@ function doSearch(){
   if(!q){toast(T.toastNoQ);return;}
   document.getElementById('srch-label').textContent=q;
   closeSrch();
+  if(!ensureKakaoServices()){toast(T.toastNoRes);return;}
   kakaoPs.keywordSearch(q,function(data,st){
     if(st===kakao.maps.services.Status.OK){
       var lat=parseFloat(data[0].y), lng=parseFloat(data[0].x);
