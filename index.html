@@ -913,8 +913,22 @@ document.addEventListener('DOMContentLoaded',function(){
   setLang(curLang);
   document.getElementById('srch-inp').addEventListener('keydown',function(e){if(e.key==='Enter')doSearch();});
   if('serviceWorker' in navigator){
+    // 새 SW가 활성화되면(=새 배포 감지) 화면을 자동으로 새로고침해 최신 버전 반영
+    var swRefreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if(swRefreshing) return;
+      swRefreshing = true;
+      window.location.reload();
+    });
+
     navigator.serviceWorker.register('/sw.js')
-      .then(function(r){console.log('SW:',r.scope);})
+      .then(function(r){
+        console.log('SW:',r.scope);
+        // 앱을 열 때마다 새 배포 여부를 즉시 확인
+        r.update();
+        // 앱을 오래 켜둔 경우를 대비해 주기적으로도 확인 (30분)
+        setInterval(function(){ r.update(); }, 30*60*1000);
+      })
       .catch(function(){});
   }
 });
