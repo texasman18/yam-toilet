@@ -146,9 +146,10 @@
     .ii{font-size:18px;width:26px;text-align:center;flex-shrink:0;}
     .il{color:rgba(0,0,0,0.4);font-size:10px;font-weight:700;min-width:48px;padding-top:2px;text-transform:uppercase;letter-spacing:0.08em;}
     .iv{font-weight:600;flex:1;line-height:1.4;color:rgba(0,0,0,0.87);}
-    .acts{display:flex;gap:8px;margin-top:16px;}
-    .act{flex:1;padding:13px 0;border-radius:50px;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:transform 0.15s;}
+    .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+    .act{flex:1 1 calc(50% - 4px);min-width:120px;padding:13px 0;border-radius:50px;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:transform 0.15s;}
     .act:active{transform:scale(0.95);}
+    .a-apple{background:#eef2ff;color:#3730a3;}
     .a-kakao{background:#e8f5ee;color:#006241;}
     .a-naver{background:#d4e9e2;color:#00754A;}
     .a-copy{background:#f2f0eb;color:rgba(0,0,0,0.7);}
@@ -267,7 +268,7 @@ var LANG={
     detFree:'✅ 무료', detFrom:'현재 위치에서',
     detNear:'바로 근처!', detClose:'가까워요', detWalkable:'도보 가능',
     detWalk:'분', detAddr:'주소', detPhone:'전화', detSrc:'출처',
-    detKakao:'🗺️ 카카오맵', detNaver:'🟢 네이버맵', detCopy:'📋 복사',
+    detApple:'🍎 Apple 지도', detKakao:'🗺️ 카카오맵', detNaver:'🟢 네이버맵', detCopy:'📋 복사',
     detCopied:'📋 주소 복사됨',
     cntLabel:' 개 발견',
     srcPublic:'행정안전부 공공데이터',
@@ -292,7 +293,7 @@ var LANG={
     detFree:'✅ Free', detFrom:'From your location',
     detNear:'Right nearby!', detClose:'Very close', detWalkable:'Walkable',
     detWalk:'min walk', detAddr:'Address', detPhone:'Phone', detSrc:'Source',
-    detKakao:'🗺️ Kakao Maps', detNaver:'🟢 Naver Maps', detCopy:'📋 Copy',
+    detApple:'🍎 Apple Maps', detKakao:'🗺️ Kakao Maps', detNaver:'🟢 Naver Maps', detCopy:'📋 Copy',
     detCopied:'📋 Address copied!',
     cntLabel:' found',
     srcPublic:'Korea Public Data',
@@ -890,6 +891,7 @@ function openDetail(i){
   var typeLabel=isGoo?T.detGoogle:isPub?T.detPublic:T.detOpen;
   var badgeCls=isGoo?'b-goo':isPub?'b-pub':'b-opn';
   var openHour=r.h&&r.h!=='nan'?esc(r.h):'';
+  var appleUrl='https://maps.apple.com/?ll='+p.y+','+p.x+'&q='+encodeURIComponent(p.place_name);
   var kakaoUrl='https://map.kakao.com/link/to/'+encodeURIComponent(p.place_name)+','+p.y+','+p.x;
   var naverUrl='https://map.naver.com/v5/search/'+encodeURIComponent(p.place_name);
   var walkLabel=dist<100?T.detNear:dist<300?T.detClose:T.detWalkable;
@@ -904,6 +906,7 @@ function openDetail(i){
     (p.phone&&p.phone!=='nan'?'<div class="info-row"><div class="ii">📞</div><div class="il">'+T.detPhone+'</div><div class="iv">'+esc(p.phone)+'</div></div>':'')+
     '<div class="info-row"><div class="ii">ℹ️</div><div class="il">'+T.detSrc+'</div><div class="iv">'+src+'</div></div>'+
     '<div class="acts">'+
+    '<button class="act a-apple" onclick="window.open(\''+appleUrl+'\',\'_blank\')">'+T.detApple+'</button>'+
     '<button class="act a-kakao" onclick="window.open(\''+kakaoUrl+'\',\'_blank\')">'+T.detKakao+'</button>'+
     '<button class="act a-naver" onclick="window.open(\''+naverUrl+'\',\'_blank\')">'+T.detNaver+'</button>'+
     '<button class="act a-copy" onclick="navigator.clipboard.writeText(decodeURIComponent(\''+addrEnc+'\')).then(function(){toast(T.detCopied)})">'+T.detCopy+'</button>'+
