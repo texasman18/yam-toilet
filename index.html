@@ -23,6 +23,7 @@
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAplYXuzjhjgi-f-M_zR3qahJ-KehNhD1g&libraries=places&language=en&region=KR" async defer></script>
   <script>var _urlLang=new URLSearchParams(location.search).get('lang')||'ko';</script>
   <style>
+    :root{--safe-top:54px;}
     *{margin:0;padding:0;box-sizing:border-box;}
     body{font-family:'Noto Sans KR',sans-serif;background:#f2f0eb;color:rgba(0,0,0,0.87);overflow:hidden;}
 
@@ -53,7 +54,7 @@
     #kakaoMap{position:absolute;inset:0;width:100%!important;height:100%!important;}
 
     /* ── 상단바 ── */
-    .topbar{position:absolute;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px;background:linear-gradient(to bottom,rgba(242,240,235,0.97) 70%,transparent);pointer-events:none;}
+    .topbar{position:absolute;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:10px;padding:calc(var(--safe-top) + 12px) 14px 12px;background:linear-gradient(to bottom,rgba(242,240,235,0.97) 70%,transparent);pointer-events:none;}
     .topbar>*{pointer-events:auto;}
     .logo-sm{width:38px;height:38px;border-radius:12px;overflow:hidden;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,0.12);}
     .logo-sm img{width:100%;height:100%;object-fit:cover;}
@@ -61,22 +62,22 @@
     .search-box span{color:rgba(0,0,0,0.4);font-size:14px;}
 
     /* ── 필터 ── */
-    .filters{position:absolute;top:66px;left:0;right:0;z-index:100;display:flex;gap:8px;padding:0 14px;overflow-x:auto;scrollbar-width:none;}
+    .filters{position:absolute;top:calc(var(--safe-top) + 66px);left:0;right:0;z-index:100;display:flex;gap:8px;padding:0 14px;overflow-x:auto;scrollbar-width:none;}
     .filters::-webkit-scrollbar{display:none;}
     .fc{padding:7px 16px;border-radius:50px;border:1.5px solid rgba(0,98,65,0.2);font-size:13px;font-weight:700;white-space:nowrap;background:white;cursor:pointer;font-family:'Noto Sans KR',sans-serif;box-shadow:0 1px 1px rgba(0,0,0,0.14),0 1px 3px rgba(0,0,0,0.06);flex-shrink:0;transition:all 0.2s;}
     .fc.on{background:#00754A;color:white;border-color:#00754A;box-shadow:0 4px 12px rgba(0,117,74,0.3);}
 
     /* ── 위치·카운트 필 ── */
-    #loc-pill{position:absolute;top:108px;left:50%;transform:translateX(-50%);z-index:100;background:white;border-radius:50px;padding:7px 16px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 2px 2px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.06);display:none;align-items:center;gap:6px;}
+    #loc-pill{position:absolute;top:calc(var(--safe-top) + 108px);left:50%;transform:translateX(-50%);z-index:100;background:white;border-radius:50px;padding:7px 16px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 2px 2px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.06);display:none;align-items:center;gap:6px;}
     #loc-pill.show{display:flex;}
     .bdot{width:8px;height:8px;background:#00754A;border-radius:50%;flex-shrink:0;}
-    #count-pill{position:absolute;top:146px;left:50%;transform:translateX(-50%);z-index:100;background:white;border-radius:50px;padding:6px 16px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 2px 2px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.06);display:none;align-items:center;gap:6px;}
+    #count-pill{position:absolute;top:calc(var(--safe-top) + 146px);left:50%;transform:translateX(-50%);z-index:100;background:white;border-radius:50px;padding:6px 16px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 2px 2px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.06);display:none;align-items:center;gap:6px;}
     #count-pill.show{display:flex;}
 
     /* ── 로딩 ── */
     #loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;background:white;border-radius:50px;padding:14px 24px;display:none;align-items:center;gap:10px;box-shadow:0 0 0.5px rgba(0,0,0,0.14),0 8px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:700;}
     #loading.show{display:flex;}
-    #mini-loading{position:absolute;top:108px;right:14px;z-index:200;background:white;border-radius:50%;width:36px;height:36px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.15);}
+    #mini-loading{position:absolute;top:calc(var(--safe-top) + 108px);right:14px;z-index:200;background:white;border-radius:50%;width:36px;height:36px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.15);}
     #mini-loading.show{display:flex;}
     .spin{width:18px;height:18px;border:2.5px solid #d4e9e2;border-top-color:#00754A;border-radius:50%;animation:spin 0.7s linear infinite;}
     .spin-sm{width:16px;height:16px;border:2px solid #d4e9e2;border-top-color:#00754A;border-radius:50%;animation:spin 0.7s linear infinite;}
