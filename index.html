@@ -260,6 +260,7 @@ var LANG={
     loading:'화장실 검색 중...',
     toastLoc:'📍 내 위치 확인 중...',
     toastNoLoc:'위치 권한을 허용해주세요',
+    toastLocWeak:'GPS 신호가 약해요. 잠시 후 다시 시도해주세요',
     toastNone:'주변에 화장실이 없어요. 지도를 이동해보세요.',
     toastNoQ:'검색어를 입력해주세요',
     toastNoRes:'검색 결과가 없습니다',
@@ -285,6 +286,7 @@ var LANG={
     loading:'Searching restrooms...',
     toastLoc:'📍 Getting your location...',
     toastNoLoc:'Please allow location access',
+    toastLocWeak:'Weak GPS signal. Please try again shortly',
     toastNone:'No restrooms found nearby. Try moving the map.',
     toastNoQ:'Please enter a search term',
     toastNoRes:'No results found',
@@ -670,25 +672,34 @@ function zoomIn(){if(!map)return;if(curLang==='en')map.setZoom(map.getZoom()+1);
 function zoomOut(){if(!map)return;if(curLang==='en')map.setZoom(map.getZoom()-1);else map.setLevel(map.getLevel()+1);}
 
 // ── 내 위치 ────────────────────────────────────────────────
+function onLocSuccess(pos){
+  localStorage.setItem('yam_loc','1');
+  myLat=pos.coords.latitude; myLng=pos.coords.longitude;
+  if(myLocMarker){try{myLocMarker.setMap(null);}catch(e){} myLocMarker=null;}
+  if(curLang==='en'){
+    map.setCenter({lat:myLat,lng:myLng}); map.setZoom(18);
+    myLocMarker=new google.maps.Marker({position:{lat:myLat,lng:myLng},map:map,icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#00754A',fillOpacity:1,strokeColor:'white',strokeWeight:3}});
+  } else {
+    map.setCenter(new kakao.maps.LatLng(myLat,myLng)); map.setLevel(3);
+    myLocMarker=new kakao.maps.CustomOverlay({map:map,position:new kakao.maps.LatLng(myLat,myLng),zIndex:10,content:'<div style="width:16px;height:16px;border-radius:50%;background:#00754A;border:3px solid white;box-shadow:0 2px 8px rgba(0,117,74,0.5);margin:-8px 0 0 -8px;"></div>'});
+  }
+  updateLoc(myLat,myLng);
+  searchNear(myLat,myLng);
+}
+function onLocErrorFinal(err){
+  if(err&&err.code===1){ toast(T.toastNoLoc); } else { toast(T.toastLocWeak); }
+  searchNear(myLat,myLng);
+}
 function goMyLoc(){
   if(!map)return;
   if(!navigator.geolocation){searchNear(myLat,myLng);return;}
   var asked=localStorage.getItem('yam_loc');
   if(!asked) toast(T.toastLoc);
-  navigator.geolocation.getCurrentPosition(function(pos){
-    localStorage.setItem('yam_loc','1');
-    myLat=pos.coords.latitude; myLng=pos.coords.longitude;
-    if(myLocMarker){try{myLocMarker.setMap(null);}catch(e){} myLocMarker=null;}
-    if(curLang==='en'){
-      map.setCenter({lat:myLat,lng:myLng}); map.setZoom(18);
-      myLocMarker=new google.maps.Marker({position:{lat:myLat,lng:myLng},map:map,icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#00754A',fillOpacity:1,strokeColor:'white',strokeWeight:3}});
-    } else {
-      map.setCenter(new kakao.maps.LatLng(myLat,myLng)); map.setLevel(3);
-      myLocMarker=new kakao.maps.CustomOverlay({map:map,position:new kakao.maps.LatLng(myLat,myLng),zIndex:10,content:'<div style="width:16px;height:16px;border-radius:50%;background:#00754A;border:3px solid white;box-shadow:0 2px 8px rgba(0,117,74,0.5);margin:-8px 0 0 -8px;"></div>'});
-    }
-    updateLoc(myLat,myLng);
-    searchNear(myLat,myLng);
-  },function(){toast(T.toastNoLoc);searchNear(myLat,myLng);},{timeout:8000,enableHighAccuracy:true,maximumAge:60000});
+  navigator.geolocation.getCurrentPosition(onLocSuccess,function(err){
+    if(err&&err.code===1){ onLocErrorFinal(err); return; }
+    // 정밀측위 실패(타임아웃/신호약함) → 저정밀(WiFi/Cell 기반) 모드로 한 번 더 재시도
+    navigator.geolocation.getCurrentPosition(onLocSuccess,onLocErrorFinal,{timeout:10000,enableHighAccuracy:false,maximumAge:300000});
+  },{timeout:15000,enableHighAccuracy:true,maximumAge:60000});
 }
 
 // ── 역지오코딩 ─────────────────────────────────────────────
