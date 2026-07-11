@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "kr.techcel.yam2",
+      "sha256_cert_fingerprints": [
+        "65:EF:45:6E:64:41:20:B9:BF:2D:48:39:34:44:F1:E4:A6:FD:4E:5A:3F:95:18:7F:B9:93:89:84:A8:03:12:DF"
+      ]
+    }
+  }
+]
