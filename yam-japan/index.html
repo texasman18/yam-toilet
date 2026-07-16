@@ -320,11 +320,16 @@ function isInvalidJP(name,addr,cat){
 
 // ── 일본 데이터 로드 (없어도 정상 동작 — Google Places 런타임만으로) ──
 function loadJapanData(cb){
-  if(japanData){cb();return;}
-  // 절대경로 필수: /yam-japan (슬래시 없음) 접속 시 상대경로가 루트로 풀려 404가 나는 것 방지
-  fetch('/yam-japan/japan_toilets.json').then(function(r){return r.json();}).then(function(d){
+  if(japanData&&japanData.length){cb();return;}
+  // 배포 위치 자동 감지: 독립 저장소(루트) / yam-toilet 하위폴더 둘 다 지원.
+  // 상대경로는 /yam-japan(무슬래시) 접속 시 루트로 풀려 404 — 절대경로로 구성
+  var base=location.pathname.indexOf('/yam-japan')===0?'/yam-japan':'';
+  fetch(base+'/japan_toilets.json').then(function(r){
+    if(!r.ok) throw new Error(r.status);
+    return r.json();
+  }).then(function(d){
     japanData=d; console.log('일본데이터:',d.length+'개'); cb();
-  }).catch(function(){japanData=[];cb();});
+  }).catch(function(){japanData=null;cb();}); // 실패를 캐시하지 않음 — 다음 검색에서 재시도
 }
 
 // ── 시작 ──────────────────────────────────────────────────
@@ -374,7 +379,7 @@ function buildQuickPicks(){
 // ── 지도 초기화 (Google Maps 단독) ─────────────────────────
 function initMap(){
   var el=document.getElementById('kakaoMap');
-  map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:13,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
+  map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:13,mapTypeControl:false,streetViewControl:false,fullscreenControl:false,gestureHandling:'greedy'});
   var rt=null;
   function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());},600);}
   google.maps.event.addListener(map,'dragend',ar);
