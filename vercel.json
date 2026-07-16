@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/yam-japan",
+      "destination": "/yam-japan/index.html"
+    },
+    {
+      "source": "/yam-japan/",
+      "destination": "/yam-japan/index.html"
+    },
+    {
       "source": "/((?!.*\\.).*)",
       "destination": "/index.html"
     }
@@ -29,6 +37,15 @@
     },
     {
       "source": "/toilets.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
+      "source": "/yam-japan/japan_toilets.json",
       "headers": [
         {
           "key": "Cache-Control",

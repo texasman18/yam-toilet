@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>얌 재팬 — 일본 여행 화장실 찾기</title>
+  <link rel="icon" href="/icon.png" type="image/png">
+  <link rel="shortcut icon" href="/icon.png" type="image/png">
+  <meta name="theme-color" content="#00754A">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="얌 재팬">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <meta name="description" content="일본 여행 중 급할 때 가장 먼저 찾는 화장실 앱. 오사카·도쿄·후쿠오카 등 일본 주요 10개 도시를 한국어로 지원합니다.">
+  <meta property="og:title" content="얌 재팬 — 일본 여행 화장실 찾기">
+  <meta property="og:image" content="/icon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <!-- Google Maps SDK (한국어 라벨, 일본 리전) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAplYXuzjhjgi-f-M_zR3qahJ-KehNhD1g&libraries=places&language=ko&region=JP" async defer></script>
+  <style>
+    :root{--safe-top:54px;}
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Noto Sans KR',sans-serif;background:#f2f0eb;color:rgba(0,0,0,0.87);overflow:hidden;}
+
+    /* ── 랜딩 ── */
+    #landing{position:fixed;inset:0;z-index:999;background:linear-gradient(160deg,#f2f0eb 0%,#eaf0ea 50%,#ede8df 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.5s;}
+    #landing.hide{opacity:0;pointer-events:none;}
+    .grid{position:absolute;inset:0;background-image:linear-gradient(#006241 1px,transparent 1px),linear-gradient(90deg,#006241 1px,transparent 1px);background-size:40px 40px;opacity:0.03;pointer-events:none;}
+    .orb{position:absolute;border-radius:50%;filter:blur(70px);opacity:0.35;pointer-events:none;}
+    .orb1{width:260px;height:260px;background:#00754A;top:5%;left:-80px;}
+    .orb2{width:320px;height:320px;background:#1E3932;bottom:8%;right:-100px;}
+    .landing-inner{position:relative;z-index:1;text-align:center;padding:20px;width:100%;max-width:400px;}
+    .logo-wrap{width:90px;height:90px;border-radius:22px;overflow:hidden;margin:0 auto 20px;box-shadow:0 12px 30px rgba(0,117,74,0.35);}
+    .logo-wrap img{width:100%;height:100%;object-fit:cover;}
+    .tagline{color:#006241;font-weight:800;font-size:11px;letter-spacing:0.22em;margin-bottom:14px;text-transform:uppercase;}
+    .landing-title{font-size:36px;font-weight:700;line-height:1.25;margin-bottom:20px;color:#006241;letter-spacing:-0.01em;}
+    .landing-title .hi{color:#00754A;}
+    .start-btn{background:#00754A;color:white;border:none;padding:18px 0;border-radius:50px;font-size:17px;font-weight:700;width:100%;box-shadow:0 0 0.5px rgba(0,0,0,0.14),0 8px 20px rgba(0,117,74,0.35);cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:transform 0.2s;}
+    .start-btn:active{transform:scale(0.95);}
+    .city-sec{margin-top:22px;}
+    .city-label{font-size:11px;color:rgba(0,0,0,0.45);font-weight:700;letter-spacing:0.08em;margin-bottom:10px;}
+    .city-wrap{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;}
+    .city-pill{padding:6px 14px;border-radius:50px;border:1.5px solid rgba(0,117,74,0.25);background:rgba(255,255,255,0.45);font-size:12px;font-weight:600;color:#006241;}
+    .kr-link{margin-top:18px;font-size:12px;color:#006241;font-weight:600;opacity:0.8;}
+    .kr-link a{color:inherit;text-decoration:underline;}
+    .powered{position:absolute;bottom:44px;font-size:12px;color:rgba(0,0,0,0.38);}
+    .contact{position:absolute;bottom:24px;font-size:12px;color:#006241;font-weight:600;opacity:0.75;}
+
+    /* ── 지도화면 ── */
+    #mapscreen{position:fixed;inset:0;z-index:1;visibility:hidden;}
+    #mapscreen.show{visibility:visible;}
+    #kakaoMap{position:absolute;inset:0;width:100%!important;height:100%!important;}
+
+    /* ── 상단바 ── */
+    .topbar{position:absolute;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;gap:10px;padding:calc(var(--safe-top) + 12px) 14px 12px;background:linear-gradient(to bottom,rgba(242,240,235,0.97) 70%,transparent);pointer-events:none;}
+    .topbar>*{pointer-events:auto;}
+    .logo-sm{width:38px;height:38px;border-radius:12px;overflow:hidden;flex-shrink:0;box-shadow:0 3px 10px rgba(0,0,0,0.12);}
+    .logo-sm img{width:100%;height:100%;object-fit:cover;}
+    .search-box{flex:1;background:white;border-radius:50px;padding:10px 16px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 2px 2px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.06);cursor:pointer;}
+    .search-box span{color:rgba(0,0,0,0.4);font-size:14px;}
+
+    /* ── 필터 ── */
+    .filters{position:absolute;top:calc(var(--safe-top) + 66px);left:0;right:0;z-index:100;display:flex;gap:8px;padding:0 14px;overflow-x:auto;scrollbar-width:none;}
+    .filters::-webkit-scrollbar{display:none;}
+    .fc{padding:7px 16px;border-radius:50px;border:1.5px solid rgba(0,98,65,0.2);font-size:13px;font-weight:700;white-space:nowrap;background:white;cursor:pointer;font-family:'Noto Sans KR',sans-serif;box-shadow:0 1px 1px rgba(0,0,0,0.14),0 1px 3px rgba(0,0,0,0.06);flex-shrink:0;transition:all 0.2s;}
+    .fc.on{background:#00754A;color:white;border-color:#00754A;box-shadow:0 4px 12px rgba(0,117,74,0.3);}
+
+    /* ── 위치·카운트 필 ── */
+    #loc-pill{position:absolute;top:calc(var(--safe-top) + 108px);left:50%;transform:translateX(-50%);z-index:100;background:white;border-radius:50px;padding:7px 16px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 2px 2px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.06);display:none;align-items:center;gap:6px;}
+    #loc-pill.show{display:flex;}
+    .bdot{width:8px;height:8px;background:#00754A;border-radius:50%;flex-shrink:0;}
+    #count-pill{position:absolute;top:calc(var(--safe-top) + 146px);left:50%;transform:translateX(-50%);z-index:100;background:white;border-radius:50px;padding:6px 16px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.1),0 2px 2px rgba(0,0,0,0.06);border:1px solid rgba(0,0,0,0.06);display:none;align-items:center;gap:6px;}
+    #count-pill.show{display:flex;}
+
+    /* ── 로딩 ── */
+    #loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:200;background:white;border-radius:50px;padding:14px 24px;display:none;align-items:center;gap:10px;box-shadow:0 0 0.5px rgba(0,0,0,0.14),0 8px 16px rgba(0,0,0,0.1);font-size:13px;font-weight:700;}
+    #loading.show{display:flex;}
+    #mini-loading{position:absolute;top:calc(var(--safe-top) + 108px);right:14px;z-index:200;background:white;border-radius:50%;width:36px;height:36px;display:none;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.15);}
+    #mini-loading.show{display:flex;}
+    .spin{width:18px;height:18px;border:2.5px solid #d4e9e2;border-top-color:#00754A;border-radius:50%;animation:spin 0.7s linear infinite;}
+    .spin-sm{width:16px;height:16px;border:2px solid #d4e9e2;border-top-color:#00754A;border-radius:50%;animation:spin 0.7s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ── FAB ── */
+    .fabs{position:absolute;right:14px;bottom:40px;z-index:100;display:flex;flex-direction:column;gap:10px;align-items:center;}
+    .fab{width:46px;height:46px;border-radius:50%;background:white;border:none;box-shadow:0 0 6px rgba(0,0,0,0.14),0 4px 8px rgba(0,0,0,0.1);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+    .fab-myloc{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;background:linear-gradient(135deg,#00754A,#1E3932);box-shadow:0 0 6px rgba(0,117,74,0.24),0 8px 12px rgba(0,117,74,0.2);display:flex;align-items:center;justify-content:center;font-size:24px;transition:transform 0.15s;}
+    .fab-myloc:active{transform:scale(0.92);}
+
+    /* ── 범례·출처 ── */
+    .legend{position:absolute;left:14px;bottom:40px;z-index:100;background:rgba(242,240,235,0.95);padding:10px 14px;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 2px 2px rgba(0,0,0,0.04);}
+    .li{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;margin-bottom:4px;color:rgba(0,0,0,0.7);}
+    .li:last-child{margin-bottom:0;}
+    .ld{width:10px;height:10px;border-radius:50%;}
+    .ld.pub{background:#2563eb;}
+    .ld.opn{background:#00754A;}
+    .ld.goo{background:#cba258;}
+    .src-link{margin-top:8px;padding-top:8px;border-top:1px solid rgba(0,0,0,0.08);font-size:11px;font-weight:700;color:rgba(0,0,0,0.45);cursor:pointer;text-decoration:underline;}
+
+    /* ── 마커 ── */
+    .cm{background:white;border-radius:50px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 0 0.5px rgba(0,0,0,0.14),0 2px 4px rgba(0,0,0,0.18);border:2px solid;position:relative;white-space:nowrap;display:flex;align-items:center;gap:4px;font-family:'Noto Sans KR',sans-serif;}
+    .cm::after{content:'';position:absolute;bottom:-7px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-width:6px;border-top-style:solid;}
+    .cm-pub{border-color:#2563eb;color:#2563eb;}
+    .cm-pub::after{border-top-color:#2563eb;}
+    .cm-opn{border-color:#00754A;color:#006241;}
+    .cm-opn::after{border-top-color:#00754A;}
+    .cm-goo{border-color:#cba258;color:#8a6f2e;}
+    .cm-goo::after{border-top-color:#cba258;}
+
+    /* ── 바텀시트 ── */
+    .overlay{position:fixed;inset:0;background:rgba(30,57,50,0.5);z-index:600;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+    .overlay.on{opacity:1;pointer-events:auto;}
+    .sheet{position:fixed;bottom:0;left:0;right:0;z-index:601;background:white;border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.2,0.8,0.2,1);max-height:75vh;display:flex;flex-direction:column;box-shadow:0 -4px 24px rgba(0,0,0,0.1);}
+    .sheet.on{transform:translateY(0);}
+    .handle{width:40px;height:4px;background:#d4e9e2;border-radius:2px;margin:12px auto;flex-shrink:0;cursor:pointer;}
+    .sc{overflow-y:auto;flex:1;padding:0 20px 40px;}
+    .det-type{font-size:10px;font-weight:800;color:#006241;letter-spacing:0.18em;text-transform:uppercase;margin-bottom:4px;}
+    .det-name{font-size:20px;font-weight:700;margin-bottom:4px;line-height:1.3;color:rgba(0,0,0,0.87);}
+    .det-addr{font-size:13px;color:rgba(0,0,0,0.58);margin-bottom:14px;line-height:1.5;}
+    .dist-card{background:linear-gradient(135deg,#f2f0eb,#e8f5ee);border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;}
+    .dist-num{font-size:32px;font-weight:900;color:#00754A;}
+    .dist-right{text-align:right;}
+    .dist-walk{font-size:12px;font-weight:700;color:#006241;}
+    .dist-min{font-size:11px;color:rgba(0,0,0,0.4);}
+    .badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+    .badge{padding:5px 12px;border-radius:50px;font-size:12px;font-weight:700;}
+    .b-pub{background:#dbeeff;color:#2563eb;}
+    .b-opn{background:#d4e9e2;color:#006241;}
+    .b-goo{background:#faf0d8;color:#8a6f2e;}
+    .b-free{background:#e8f5ee;color:#00754A;}
+    .b-fac{background:#e8f5ee;color:#00754A;}
+    .info-row{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid #f2f0eb;font-size:14px;}
+    .info-row:last-of-type{border-bottom:none;}
+    .ii{font-size:18px;width:26px;text-align:center;flex-shrink:0;}
+    .il{color:rgba(0,0,0,0.4);font-size:10px;font-weight:700;min-width:48px;padding-top:2px;text-transform:uppercase;letter-spacing:0.08em;}
+    .iv{font-weight:600;flex:1;line-height:1.4;color:rgba(0,0,0,0.87);}
+    .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+    .act{flex:1 1 calc(50% - 4px);min-width:120px;padding:13px 0;border-radius:50px;font-size:14px;font-weight:700;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:transform 0.15s;}
+    .act:active{transform:scale(0.95);}
+    .a-apple{background:#eef2ff;color:#3730a3;}
+    .a-gmap{background:#e8f5ee;color:#006241;}
+    .a-copy{background:#f2f0eb;color:rgba(0,0,0,0.7);}
+
+    /* ── 검색 오버레이 ── */
+    #srch{position:fixed;inset:0;z-index:700;background:white;display:none;flex-direction:column;}
+    #srch.show{display:flex;}
+    .srch-top{padding:13px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #e8f0ec;}
+    .srch-back{background:none;border:none;font-size:24px;cursor:pointer;color:rgba(0,0,0,0.4);}
+    .srch-inp{flex:1;border:none;outline:none;font-size:16px;font-family:'Noto Sans KR',sans-serif;color:rgba(0,0,0,0.87);}
+    .srch-go{background:#00754A;color:white;border:none;border-radius:50px;padding:8px 18px;font-weight:700;font-size:14px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:transform 0.15s;}
+    .srch-go:active{transform:scale(0.95);}
+    .srch-label{padding:14px 16px 8px;font-size:11px;color:rgba(0,0,0,0.4);font-weight:700;letter-spacing:0.12em;text-transform:uppercase;}
+    .qp-wrap{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px;}
+    .qp{padding:7px 16px;border-radius:50px;border:1.5px solid #d4e9e2;font-size:13px;font-weight:600;background:white;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all 0.2s;}
+    .qp:active{background:#e8f5ee;border-color:#00754A;transform:scale(0.95);}
+
+    /* ── 토스트 ── */
+    #toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(14px);background:#1E3932;color:white;padding:10px 22px;border-radius:50px;font-size:13px;font-weight:700;opacity:0;transition:all 0.3s;z-index:800;white-space:nowrap;}
+    #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  </style>
+</head>
+<body>
+
+<!-- 랜딩 -->
+<div id="landing">
+  <div class="grid"></div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="landing-inner">
+    <div class="logo-wrap"><img src="/icon.png" alt="얌" onerror="this.parentElement.style.background='linear-gradient(135deg,#00754A,#1E3932)'"></div>
+    <div class="tagline">JAPAN TOILET FINDER FOR KOREANS</div>
+    <h1 class="landing-title">일본 여행 중<br><span class="hi">급할 때</span><br>얌이 찾아드려요</h1>
+    <button class="start-btn" onclick="startApp()">📍 일본에서 화장실 찾기</button>
+    <div class="city-sec">
+      <div class="city-label">현재 제공되는 도시입니다</div>
+      <div class="city-wrap" id="landing-cities"></div>
+    </div>
+    <div class="kr-link">🇰🇷 한국에서 쓰시나요? → <a href="https://yam-toilet.vercel.app" target="_blank" rel="noopener">yam-toilet.vercel.app</a></div>
+  </div>
+  <div class="powered">Powered by 테크셀</div>
+  <div class="contact">문의 : <a href="mailto:texasman@naver.com" style="color:inherit;">texasman@naver.com</a></div>
+</div>
+
+<!-- 지도화면 -->
+<div id="mapscreen">
+  <div id="kakaoMap"></div>
+  <div class="topbar">
+    <div class="logo-sm"><img src="/icon.png" alt="얌" onerror="this.parentElement.style.background='linear-gradient(135deg,#00754A,#1E3932)'"></div>
+    <div class="search-box" onclick="openSrch()"><span>🔍</span><span id="srch-label">도시·역·명소 검색</span></div>
+  </div>
+  <div class="filters">
+    <button class="fc on" id="fc-all" onclick="setFilter('all')">전체</button>
+    <button class="fc" id="fc-pub" onclick="setFilter('public')">🚻 공중화장실</button>
+    <button class="fc" id="fc-opn" onclick="setFilter('open')">🏢 개방·상업시설</button>
+  </div>
+  <div id="loc-pill"><div class="bdot"></div><span id="loc-txt">위치 확인 중...</span></div>
+  <div id="count-pill">📍 <span id="cnt">0</span><span id="cnt-label"> 개 발견</span></div>
+  <div id="loading"><div class="spin"></div><span id="loading-txt">화장실 검색 중...</span></div>
+  <div id="mini-loading"><div class="spin-sm"></div></div>
+  <div class="fabs">
+    <button class="fab" id="fab-plus" onclick="zoomIn()" title="확대">＋</button>
+    <button class="fab" id="fab-minus" onclick="zoomOut()" title="축소">－</button>
+    <button class="fab-myloc" onclick="goMyLoc()" title="현재 위치">📍</button>
+  </div>
+  <div class="legend">
+    <div class="li"><div class="ld pub"></div><span id="leg-pub">공중화장실</span></div>
+    <div class="li"><div class="ld opn"></div><span id="leg-opn">개방화장실</span></div>
+    <div class="li"><div class="ld goo"></div><span id="leg-goo">Google 검색</span></div>
+    <div class="src-link" onclick="openSourceSheet()">ⓘ 데이터 출처</div>
+  </div>
+</div>
+
+<!-- 바텀시트 -->
+<div class="overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet">
+  <div class="handle" onclick="closeSheet()"></div>
+  <div class="sc" id="sheet-body"></div>
+</div>
+
+<!-- 검색 -->
+<div id="srch">
+  <div class="srch-top">
+    <button class="srch-back" onclick="closeSrch()">←</button>
+    <input class="srch-inp" id="srch-inp" type="text" placeholder="도시·역·명소 (예: 난바, 신주쿠, 나라공원)">
+    <button class="srch-go" onclick="doSearch()">검색</button>
+  </div>
+  <div class="srch-label" id="srch-quick-label">빠른 선택</div>
+  <div class="qp-wrap" id="qp-wrap"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── 다국어(일본 모드는 한국어 UI 고정 — LANG.jp만 사용) ─────
+var LANG={
+  jp:{
+    title:'일본 여행 중<br><span class="hi">급할 때</span><br>얌이 찾아드려요',
+    startBtn:'📍 일본에서 화장실 찾기',
+    searchHint:'도시·역·명소 검색 (예: 난바, 신주쿠)',
+    filterAll:'전체', filterPub:'🚻 공중화장실', filterOpn:'🏢 개방·상업시설',
+    loading:'화장실 검색 중...',
+    toastLoc:'📍 내 위치 확인 중...',
+    toastNoLoc:'위치 권한을 허용해주세요',
+    toastNone:'주변에 화장실이 없어요. 지도를 이동하거나 도시를 선택해보세요.',
+    toastNoQ:'검색어를 입력해주세요',
+    toastNoRes:'검색 결과가 없습니다',
+    toastNoCity:'현재 도시는 화장실 찾기가 제공되지 않습니다',
+    landCityLabel:'현재 제공되는 도시입니다',
+    srchPlaceholder:'도시·역·명소 (예: 난바, 신주쿠, 나라공원)',
+    detPublic:'공중화장실', detOpen:'개방화장실', detGoogle:'Google 검색 결과',
+    detFree:'✅ 무료', detFrom:'현재 위치에서',
+    detNear:'바로 근처!', detClose:'가까워요', detWalkable:'도보 가능',
+    detWalk:'분', detAddr:'주소', detPhone:'전화', detSrc:'출처',
+    detGoogleDir:'🗺️ 구글맵 길찾기', detApple:'🍎 Apple 지도', detCopy:'📋 주소 복사',
+    detCopied:'📋 주소 복사됨 (택시기사님께 보여주세요)',
+    cntLabel:' 개 발견',
+    srcCity:'일본 지자체 오픈데이터', srcOsm:'OpenStreetMap', srcGoogle:'Google Maps',
+    legPub:'공중화장실', legOpn:'개방화장실', legGoo:'Google 검색',
+    facWc:'♿ 휠체어', facBa:'🚼 기저귀교환대', facOs:'⚕️ 오스토메이트',
+    qp:['오사카 난바','도쿄 신주쿠','후쿠오카 텐진','교토역','삿포로','나하 국제거리','나고야역','고베 산노미야','나라공원','요코하마'],
+  }
+};
+var T=LANG.jp;
+
+// ── 대상 도시 10곳 ────────────────────────────────────────
+var JP_CITIES=[
+  {id:'osaka',   n:'오사카',  la:34.6688, ln:135.5012, bbox:[34.58,135.42,34.77,135.60]},
+  {id:'tokyo',   n:'도쿄',    la:35.6812, ln:139.7671, bbox:[35.53,139.56,35.82,139.92]},
+  {id:'fukuoka', n:'후쿠오카',la:33.5902, ln:130.4017, bbox:[33.50,130.25,33.70,130.48]},
+  {id:'kyoto',   n:'교토',    la:34.9858, ln:135.7588, bbox:[34.87,135.64,35.10,135.84]},
+  {id:'sapporo', n:'삿포로',  la:43.0687, ln:141.3508, bbox:[42.95,141.20,43.15,141.50]},
+  {id:'naha',    n:'나하',    la:26.2124, ln:127.6809, bbox:[26.15,127.62,26.35,127.78]},
+  {id:'nagoya',  n:'나고야',  la:35.1709, ln:136.8815, bbox:[35.03,136.79,35.25,137.06]},
+  {id:'kobe',    n:'고베',    la:34.6913, ln:135.1955, bbox:[34.62,135.08,34.78,135.32]},
+  {id:'nara',    n:'나라',    la:34.6851, ln:135.8048, bbox:[34.63,135.77,34.72,135.92]},
+  {id:'yokohama',n:'요코하마',la:35.4437, ln:139.6380, bbox:[35.30,139.48,35.56,139.70]},
+];
+function cityOf(lat,lng){
+  return JP_CITIES.find(function(c){var b=c.bbox;return lat>=b[0]&&lat<=b[2]&&lng>=b[1]&&lng<=b[3];})||null;
+}
+
+// ── 유틸 ──────────────────────────────────────────────────
+function esc(s){
+  return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+var toastT;
+function toast(msg){var el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){el.classList.remove('show');},2800);}
+var isFirstLoad=true;
+function setLoad(v){
+  if(isFirstLoad){document.getElementById('loading').classList.toggle('show',v);}
+  else{document.getElementById('mini-loading').classList.toggle('show',v);}
+  if(!v&&isFirstLoad) isFirstLoad=false;
+}
+function calcDist(la1,ln1,la2,ln2){
+  var R=6371000,dLa=(la2-la1)*Math.PI/180,dLn=(ln2-ln1)*Math.PI/180;
+  var a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLn/2)*Math.sin(dLn/2);
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+
+// ── 상태 ──────────────────────────────────────────────────
+var map=null;
+var myLat=34.6688, myLng=135.5012; // 기본값: 오사카
+var allData=[], markers=[], curFilter='all', myLocMarker=null;
+var japanData=null, curCity=null, curLocText='';
+
+// ── 일본어 필터 키워드 (Google Places 런타임 결과 필터용) ──
+var EXCLUDE_JP=['トイレ修理','水道','リフォーム','水漏れ','便器交換','清掃'];
+var VALID_JP=['トイレ','公衆','お手洗い','化粧室','restroom','toilet','화장실'];
+function isInvalidJP(name,addr,cat){
+  var s=(name||'')+' '+(addr||'')+' '+(cat||'');
+  if(EXCLUDE_JP.some(function(k){return s.indexOf(k)>-1;})) return true;
+  var hasValid=VALID_JP.some(function(k){
+    return (name||'').toLowerCase().indexOf(k.toLowerCase())>-1||(cat||'').toLowerCase().indexOf(k.toLowerCase())>-1;
+  });
+  return !hasValid;
+}
+
+// ── 일본 데이터 로드 (없어도 정상 동작 — Google Places 런타임만으로) ──
+function loadJapanData(cb){
+  if(japanData){cb();return;}
+  // 절대경로 필수: /yam-japan (슬래시 없음) 접속 시 상대경로가 루트로 풀려 404가 나는 것 방지
+  fetch('/yam-japan/japan_toilets.json').then(function(r){return r.json();}).then(function(d){
+    japanData=d; console.log('일본데이터:',d.length+'개'); cb();
+  }).catch(function(){japanData=[];cb();});
+}
+
+// ── 시작 ──────────────────────────────────────────────────
+function startApp(){
+  document.getElementById('landing').classList.add('hide');
+  document.getElementById('mapscreen').classList.add('show');
+
+  document.getElementById('srch-label').textContent=T.searchHint;
+  document.getElementById('fc-all').textContent=T.filterAll;
+  document.getElementById('fc-pub').textContent=T.filterPub;
+  document.getElementById('fc-opn').textContent=T.filterOpn;
+  document.getElementById('cnt-label').textContent=T.cntLabel;
+  document.getElementById('loading-txt').textContent=T.loading;
+  document.getElementById('srch-inp').placeholder=T.srchPlaceholder;
+  document.getElementById('leg-pub').textContent=T.legPub;
+  document.getElementById('leg-opn').textContent=T.legOpn;
+  document.getElementById('leg-goo').textContent=T.legGoo;
+
+  buildQuickPicks();
+
+  var chk=setInterval(function(){
+    if(window.google&&window.google.maps&&window.google.maps.Map){clearInterval(chk);initMap();}
+  },100);
+}
+
+function buildLandingCities(){
+  var wrap=document.getElementById('landing-cities');
+  if(!wrap) return;
+  wrap.innerHTML='';
+  JP_CITIES.forEach(function(c){
+    var s=document.createElement('span');
+    s.className='city-pill'; s.textContent=c.n;
+    wrap.appendChild(s);
+  });
+}
+
+function buildQuickPicks(){
+  var wrap=document.getElementById('qp-wrap');
+  wrap.innerHTML='';
+  T.qp.forEach(function(q){
+    var b=document.createElement('button');b.className='qp';b.textContent=q;
+    b.onclick=function(){document.getElementById('srch-inp').value=q;doSearch();};
+    wrap.appendChild(b);
+  });
+}
+
+// ── 지도 초기화 (Google Maps 단독) ─────────────────────────
+function initMap(){
+  var el=document.getElementById('kakaoMap');
+  map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:13,mapTypeControl:false,streetViewControl:false,fullscreenControl:false});
+  var rt=null;
+  function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());},600);}
+  google.maps.event.addListener(map,'dragend',ar);
+  google.maps.event.addListener(map,'zoom_changed',ar);
+  goMyLoc();
+}
+
+// ── 줌 ────────────────────────────────────────────────────
+function zoomIn(){if(!map)return;map.setZoom(map.getZoom()+1);}
+function zoomOut(){if(!map)return;map.setZoom(map.getZoom()-1);}
+
+// ── 내 위치 (GPS 성공 시 도시 자동판정, 실패/일본 밖이면 오사카 폴백) ──
+function goMyLoc(){
+  if(!map)return;
+  if(!navigator.geolocation){fallbackOsaka();return;}
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var lat=pos.coords.latitude, lng=pos.coords.longitude;
+    var city=cityOf(lat,lng);
+    var inJapan=lat>=24.0&&lat<=45.8&&lng>=122.8&&lng<=146.0; // 일본 열도 bbox (통합설계서 countryOf와 동일 기준)
+    if(!city) toast(T.toastNoCity); // 제공 도시 밖 — 안내 후 자동으로 사라짐
+    if(city||inJapan){
+      // 10개 도시 밖이라도 일본 국내면 GPS 위치 그대로 검색 (Google 런타임은 도시 무관 동작)
+      myLat=lat; myLng=lng; curCity=city?city.id:null;
+      map.setCenter({lat:lat,lng:lng}); map.setZoom(18);
+      setMyLocMarker(lat,lng);
+      updateLoc(lat,lng);
+      searchNear(lat,lng);
+    } else {
+      fallbackOsaka();
+    }
+  },function(){
+    toast(T.toastNoLoc);
+    fallbackOsaka();
+  },{timeout:8000,enableHighAccuracy:true,maximumAge:60000});
+}
+function fallbackOsaka(){
+  var osaka=JP_CITIES[0];
+  curCity=osaka.id;
+  myLat=osaka.la; myLng=osaka.ln;
+  if(map){map.setCenter({lat:osaka.la,lng:osaka.ln}); map.setZoom(13);}
+  updateLoc(osaka.la,osaka.ln);
+  searchNear(osaka.la,osaka.ln);
+}
+function setMyLocMarker(lat,lng){
+  if(myLocMarker){try{myLocMarker.setMap(null);}catch(e){} myLocMarker=null;}
+  myLocMarker=new google.maps.Marker({position:{lat:lat,lng:lng},map:map,icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,fillColor:'#00754A',fillOpacity:1,strokeColor:'white',strokeWeight:3}});
+}
+
+// ── 역지오코딩 ─────────────────────────────────────────────
+function updateLoc(lat,lng){
+  if(!window.google||!window.google.maps)return;
+  new google.maps.Geocoder().geocode({location:{lat:lat,lng:lng},language:'ko'},function(res,st){
+    if(st==='OK'&&res[0]){
+      var parts=res[0].address_components;
+      var sub=parts.find(function(p){return p.types.indexOf('sublocality_level_1')>-1;});
+      var city=parts.find(function(p){return p.types.indexOf('locality')>-1;});
+      curLocText=(sub?sub.long_name:'')+(city?' '+city.long_name:'');
+      // 일본 세부 지명은 Geocoding 한국어 번역이 없어 로마자로 옴 — 표시용으로 한국어 도시명을 앞에 붙임
+      var jc=cityOf(lat,lng);
+      var disp=(jc?jc.n+(sub?' · '+sub.long_name:''):curLocText)||res[0].formatted_address.split(',')[0];
+      document.getElementById('loc-txt').textContent=disp;
+      document.getElementById('loc-pill').classList.add('show');
+    }
+  });
+}
+
+// ── 화장실 검색 ────────────────────────────────────────────
+function searchNear(lat,lng){
+  setLoad(true); clearMarkers(); allData=[];
+  loadJapanData(function(){
+    addJapanBundle(lat,lng);
+    addGooglePlacesJP(lat,lng,function(){
+      finishSearch();
+    });
+  });
+}
+
+function isDup(y,x){
+  return allData.find(function(r){return calcDist(parseFloat(y),parseFloat(x),parseFloat(r.p.y||0),parseFloat(r.p.x||0))<30;});
+}
+
+function addJapanBundle(lat,lng){
+  if(!japanData||!japanData.length)return;
+  var radius=800;
+  japanData.forEach(function(item){
+    var dist=calcDist(lat,lng,item.la,item.ln);
+    if(dist>radius)return;
+    if(isDup(item.la,item.ln))return;
+    var t=item.t&&item.t.indexOf('개방')>-1?'open':'public';
+    allData.push({
+      p:{place_name:item.n||'화장실',road_address_name:item.a||'',address_name:item.a||'',phone:item.p||'',y:item.la,x:item.ln,distance:dist},
+      t:t, src:item.s==='city'?'jpcity':'osm', h:item.h||'', f:item.f||null
+    });
+  });
+}
+
+function addGooglePlacesJP(lat,lng,cb){
+  if(!window.google||!window.google.maps){cb();return;}
+  var radius=800;
+  google.maps.importLibrary('places').then(function(lib){
+    var Place=lib.Place;
+    var locText=curLocText||'';
+    var queries=['公衆トイレ '+locText,'トイレ '+locText];
+    var done=0;
+    queries.forEach(function(q){
+      Place.searchByText({
+        fields:['displayName','formattedAddress','location'],
+        textQuery:q.trim(),
+        language:'ko'
+      }).then(function(res){
+        (res.places||[]).forEach(function(place){
+          if(!place.location)return;
+          var pLat=place.location.lat(), pLng=place.location.lng();
+          var dist=calcDist(lat,lng,pLat,pLng);
+          if(dist>radius)return;
+          var name=place.displayName||'';
+          var addr=place.formattedAddress||'';
+          if(isInvalidJP(name,addr,''))return;
+          if(isDup(pLat,pLng))return;
+          allData.push({
+            p:{place_name:name||'화장실',road_address_name:addr,address_name:addr,phone:'',y:pLat,x:pLng,distance:dist},
+            t:'open', src:'google'
+          });
+        });
+        done++;
+        if(done>=queries.length)cb();
+      }).catch(function(){done++;if(done>=queries.length)cb();});
+    });
+  }).catch(function(){cb();});
+}
+
+function finishSearch(){
+  setLoad(false);
+  allData.sort(function(a,b){return parseInt(a.p.distance||0)-parseInt(b.p.distance||0);});
+  renderMarkers();
+  var n=getFilt().length;
+  document.getElementById('cnt').textContent=n;
+  document.getElementById('count-pill').classList.toggle('show',n>0);
+  if(n===0) toast(T.toastNone);
+}
+
+// ── 마커 렌더링 (Google OverlayView) ────────────────────────
+function renderMarkers(){
+  clearMarkers();
+  getFilt().forEach(function(r,i){
+    var isPub=r.t==='public', isGoo=r.src==='google';
+    var cls=isGoo?'cm cm-goo':isPub?'cm cm-pub':'cm cm-opn';
+    var icon=isPub?'🚻':'🏢';
+    var dist=parseInt(r.p.distance||0);
+    var name=esc(r.p.place_name);
+    var distTag=dist?'<span style="font-size:10px;padding:1px 6px;border-radius:50px;background:'+(isGoo?'#faf0d8':isPub?'#dbeeff':'#d4e9e2')+';margin-left:2px;">'+dist+'m</span>':'';
+    var content='<div class="'+cls+'" onclick="openDetail('+i+')">'+icon+' '+name+distTag+'</div>';
+
+    var ov=new google.maps.OverlayView();
+    (function(r2,idx,content2){
+      ov.onAdd=function(){
+        var div=document.createElement('div');
+        div.innerHTML=content2;
+        div.style.cssText='position:absolute;cursor:pointer;white-space:nowrap;transform:translate(-50%,-100%);margin-top:-8px;';
+        div.onclick=function(){openDetail(idx);};
+        ov._div=div;
+        ov.getPanes().overlayMouseTarget.appendChild(div);
+      };
+      ov.draw=function(){
+        var pt=ov.getProjection().fromLatLngToDivPixel(new google.maps.LatLng(parseFloat(r2.p.y),parseFloat(r2.p.x)));
+        if(pt&&ov._div){ov._div.style.left=pt.x+'px';ov._div.style.top=pt.y+'px';}
+      };
+      ov.onRemove=function(){if(ov._div){ov._div.parentNode.removeChild(ov._div);ov._div=null;}};
+      ov.setMap(map);
+      markers.push(ov);
+    })(r,i,content);
+  });
+}
+
+function getFilt(){
+  if(curFilter==='all')return allData;
+  return allData.filter(function(r){return r.t===curFilter;});
+}
+function clearMarkers(){markers.forEach(function(m){m.setMap(null);});markers=[];}
+
+// ── 필터 ──────────────────────────────────────────────────
+function setFilter(f){
+  curFilter=f;
+  ['all','pub','opn'].forEach(function(k){document.getElementById('fc-'+k).classList.remove('on');});
+  document.getElementById(f==='all'?'fc-all':f==='public'?'fc-pub':'fc-opn').classList.add('on');
+  renderMarkers();
+  var n=getFilt().length;
+  document.getElementById('cnt').textContent=n;
+  document.getElementById('count-pill').classList.toggle('show',n>0);
+}
+
+// ── 상세 시트 ──────────────────────────────────────────────
+function openDetail(i){
+  var r=getFilt()[i]; if(!r)return;
+  var p=r.p, isPub=r.t==='public', isGoo=r.src==='google';
+  var name=esc(p.place_name);
+  var addrRaw=p.road_address_name||p.address_name||'주소 정보 없음';
+  var addr=esc(addrRaw);
+  var addrEnc=encodeURIComponent(addrRaw).replace(/'/g,'%27');
+  var dist=parseInt(p.distance||0);
+  var src=r.src==='osm'?T.srcOsm:r.src==='google'?T.srcGoogle:r.src==='jpcity'?T.srcCity:'';
+  var typeLabel=isGoo?T.detGoogle:isPub?T.detPublic:T.detOpen;
+  var badgeCls=isGoo?'b-goo':isPub?'b-pub':'b-opn';
+  var openHour=r.h&&r.h!=='nan'?esc(r.h):'';
+  var appleUrl='https://maps.apple.com/?ll='+p.y+','+p.x+'&q='+encodeURIComponent(p.place_name);
+  var gmapDirUrl='https://www.google.com/maps/dir/?api=1&destination='+p.y+','+p.x+'&travelmode=walking';
+  var walkLabel=dist<100?T.detNear:dist<300?T.detClose:T.detWalkable;
+
+  var facBadges='';
+  if(r.f){
+    if(r.f.wc) facBadges+='<span class="badge b-fac">'+T.facWc+'</span>';
+    if(r.f.ba) facBadges+='<span class="badge b-fac">'+T.facBa+'</span>';
+    if(r.f.os) facBadges+='<span class="badge b-fac">'+T.facOs+'</span>';
+  }
+
+  document.getElementById('sheet-body').innerHTML=
+    '<div class="det-type">'+typeLabel+'</div>'+
+    '<div class="det-name">'+name+'</div>'+
+    '<div class="det-addr">'+addr+'</div>'+
+    (dist?'<div class="dist-card"><div><div style="font-size:11px;color:rgba(0,0,0,0.4);margin-bottom:2px;">'+T.detFrom+'</div><div class="dist-num">'+dist+'m</div></div><div class="dist-right"><div style="font-size:20px;margin-bottom:2px;">🚶</div><div class="dist-walk">'+walkLabel+'</div><div class="dist-min">~'+Math.ceil(dist/60)+T.detWalk+'</div></div></div>':'')+
+    '<div class="badges"><span class="badge '+badgeCls+'">'+typeLabel+'</span><span class="badge b-free">'+T.detFree+'</span>'+facBadges+'</div>'+
+    '<div class="info-row"><div class="ii">📌</div><div class="il">'+T.detAddr+'</div><div class="iv">'+addr+'</div></div>'+
+    (openHour?'<div class="info-row"><div class="ii">🕐</div><div class="il">시간</div><div class="iv">'+openHour+'</div></div>':'')+
+    (p.phone&&p.phone!=='nan'?'<div class="info-row"><div class="ii">📞</div><div class="il">'+T.detPhone+'</div><div class="iv">'+esc(p.phone)+'</div></div>':'')+
+    '<div class="info-row"><div class="ii">ℹ️</div><div class="il">'+T.detSrc+'</div><div class="iv">'+src+'</div></div>'+
+    '<div class="acts">'+
+    '<button class="act a-gmap" onclick="window.open(\''+gmapDirUrl+'\',\'_blank\')">'+T.detGoogleDir+'</button>'+
+    '<button class="act a-apple" onclick="window.open(\''+appleUrl+'\',\'_blank\')">'+T.detApple+'</button>'+
+    ((p.road_address_name||p.address_name)?'<button class="act a-copy" onclick="navigator.clipboard.writeText(decodeURIComponent(\''+addrEnc+'\')).then(function(){toast(T.detCopied)})">'+T.detCopy+'</button>':'')+
+    '</div>';
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('sheet').classList.add('on');
+  map.panTo({lat:parseFloat(p.y),lng:parseFloat(p.x)});
+}
+function closeSheet(){
+  document.getElementById('overlay').classList.remove('on');
+  document.getElementById('sheet').classList.remove('on');
+}
+
+// ── 출처 화면 ──────────────────────────────────────────────
+function openSourceSheet(){
+  document.getElementById('sheet-body').innerHTML=
+    '<div class="det-type">DATA SOURCE</div>'+
+    '<div class="det-name">데이터 출처</div>'+
+    '<div class="info-row"><div class="ii">🗺️</div><div class="il">OSM</div><div class="iv">© OpenStreetMap contributors (ODbL)</div></div>'+
+    '<div class="info-row"><div class="ii">🔍</div><div class="il">Google</div><div class="iv">일부 결과는 Google 검색 결과를 포함합니다</div></div>'+
+    '<div class="info-row"><div class="ii">🏛️</div><div class="il">지자체</div><div class="iv">일본 지자체 오픈데이터(CC BY)는 추가 예정</div></div>';
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('sheet').classList.add('on');
+}
+
+// ── 검색 ──────────────────────────────────────────────────
+function openSrch(){document.getElementById('srch').classList.add('show');setTimeout(function(){document.getElementById('srch-inp').focus();},100);}
+function closeSrch(){document.getElementById('srch').classList.remove('show');}
+function doSearch(){
+  var q=document.getElementById('srch-inp').value.trim();
+  if(!q){toast(T.toastNoQ);return;}
+  document.getElementById('srch-label').textContent=q;
+  closeSrch();
+  if(!window.google||!window.google.maps){toast(T.toastNoRes);return;}
+  new google.maps.Geocoder().geocode({address:q,region:'JP',language:'ko'},function(res,st){
+    if(st==='OK'&&res[0]){
+      var loc=res[0].geometry.location;
+      map.setCenter(loc); map.setZoom(17);
+      updateLoc(loc.lat(),loc.lng());
+      searchNear(loc.lat(),loc.lng());
+    } else toast(T.toastNoRes);
+  });
+}
+
+// ── DOMContentLoaded ───────────────────────────────────────
+document.addEventListener('DOMContentLoaded',function(){
+  buildLandingCities();
+  document.getElementById('srch-inp').addEventListener('keydown',function(e){if(e.key==='Enter')doSearch();});
+});
+</script>
+</body>
+</html>
