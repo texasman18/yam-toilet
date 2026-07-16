@@ -380,7 +380,7 @@ function buildQuickPicks(){
 // ── 지도 초기화 (Google Maps 단독) ─────────────────────────
 function initMap(){
   var el=document.getElementById('kakaoMap');
-  map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:DEFAULT_VIEW.zoom,mapTypeControl:false,streetViewControl:false,fullscreenControl:false,gestureHandling:'greedy'});
+  map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:DEFAULT_VIEW.zoom,mapTypeControl:false,streetViewControl:false,fullscreenControl:false,gestureHandling:'greedy',clickableIcons:false});
   var rt=null;
   function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());},600);}
   google.maps.event.addListener(map,'dragend',ar);
