@@ -265,10 +265,10 @@ var T=LANG.jp;
 
 // ── 대상 도시 10곳 ────────────────────────────────────────
 var JP_CITIES=[
-  {id:'osaka',   n:'오사카',  la:34.6688, ln:135.5012, bbox:[34.58,135.42,34.77,135.60]},
-  {id:'tokyo',   n:'도쿄',    la:35.6812, ln:139.7671, bbox:[35.53,139.56,35.82,139.92]},
+  {id:'osaka',   n:'오사카',  la:34.6688, ln:135.5012, bbox:[34.57,135.38,34.78,135.61]},
+  {id:'tokyo',   n:'도쿄',    la:35.6812, ln:139.7671, bbox:[35.47,138.94,35.90,139.92]},
   {id:'fukuoka', n:'후쿠오카',la:33.5902, ln:130.4017, bbox:[33.50,130.25,33.70,130.48]},
-  {id:'kyoto',   n:'교토',    la:34.9858, ln:135.7588, bbox:[34.87,135.64,35.10,135.84]},
+  {id:'kyoto',   n:'교토',    la:34.9858, ln:135.7588, bbox:[34.87,135.55,35.32,135.88]},
   {id:'sapporo', n:'삿포로',  la:43.0687, ln:141.3508, bbox:[42.95,141.20,43.15,141.50]},
   {id:'naha',    n:'나하',    la:26.2124, ln:127.6809, bbox:[26.15,127.62,26.35,127.78]},
   {id:'nagoya',  n:'나고야',  la:35.1709, ln:136.8815, bbox:[35.03,136.79,35.25,137.06]},
@@ -302,7 +302,8 @@ function calcDist(la1,ln1,la2,ln2){
 
 // ── 상태 ──────────────────────────────────────────────────
 var map=null;
-var myLat=34.6688, myLng=135.5012; // 기본값: 오사카
+var DEFAULT_VIEW={la:35.6896, ln:139.7006, zoom:15}; // 기본 화면: 도쿄 신주쿠역
+var myLat=DEFAULT_VIEW.la, myLng=DEFAULT_VIEW.ln;
 var allData=[], markers=[], curFilter='all', myLocMarker=null;
 var japanData=null, curCity=null, curLocText='';
 
@@ -379,7 +380,7 @@ function buildQuickPicks(){
 // ── 지도 초기화 (Google Maps 단독) ─────────────────────────
 function initMap(){
   var el=document.getElementById('kakaoMap');
-  map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:13,mapTypeControl:false,streetViewControl:false,fullscreenControl:false,gestureHandling:'greedy'});
+  map=new google.maps.Map(el,{center:{lat:myLat,lng:myLng},zoom:DEFAULT_VIEW.zoom,mapTypeControl:false,streetViewControl:false,fullscreenControl:false,gestureHandling:'greedy'});
   var rt=null;
   function ar(){clearTimeout(rt);rt=setTimeout(function(){var c=map.getCenter();updateLoc(c.lat(),c.lng());searchNear(c.lat(),c.lng());},600);}
   google.maps.event.addListener(map,'dragend',ar);
@@ -391,10 +392,10 @@ function initMap(){
 function zoomIn(){if(!map)return;map.setZoom(map.getZoom()+1);}
 function zoomOut(){if(!map)return;map.setZoom(map.getZoom()-1);}
 
-// ── 내 위치 (GPS 성공 시 도시 자동판정, 실패/일본 밖이면 오사카 폴백) ──
+// ── 내 위치 (GPS 성공 시 현재 위치로 이동, 실패/일본 밖이면 신주쿠 기본 화면) ──
 function goMyLoc(){
   if(!map)return;
-  if(!navigator.geolocation){fallbackOsaka();return;}
+  if(!navigator.geolocation){fallbackDefault();return;}
   navigator.geolocation.getCurrentPosition(function(pos){
     var lat=pos.coords.latitude, lng=pos.coords.longitude;
     var city=cityOf(lat,lng);
@@ -408,20 +409,19 @@ function goMyLoc(){
       updateLoc(lat,lng);
       searchNear(lat,lng);
     } else {
-      fallbackOsaka();
+      fallbackDefault();
     }
   },function(){
     toast(T.toastNoLoc);
-    fallbackOsaka();
+    fallbackDefault();
   },{timeout:8000,enableHighAccuracy:true,maximumAge:60000});
 }
-function fallbackOsaka(){
-  var osaka=JP_CITIES[0];
-  curCity=osaka.id;
-  myLat=osaka.la; myLng=osaka.ln;
-  if(map){map.setCenter({lat:osaka.la,lng:osaka.ln}); map.setZoom(13);}
-  updateLoc(osaka.la,osaka.ln);
-  searchNear(osaka.la,osaka.ln);
+function fallbackDefault(){
+  curCity='tokyo';
+  myLat=DEFAULT_VIEW.la; myLng=DEFAULT_VIEW.ln;
+  if(map){map.setCenter({lat:myLat,lng:myLng}); map.setZoom(DEFAULT_VIEW.zoom);}
+  updateLoc(myLat,myLng);
+  searchNear(myLat,myLng);
 }
 function setMyLocMarker(lat,lng){
   if(myLocMarker){try{myLocMarker.setMap(null);}catch(e){} myLocMarker=null;}
