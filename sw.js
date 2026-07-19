@@ -1,9 +1,12 @@
-const CACHE_NAME = 'yam-cache-v3'; // v3: 캐시 전략 변경(GET 가드·ok 가드·정적 자산 저장)에 따라 구버전 캐시 전체 무효화
+const CACHE_NAME = 'yam-total-v3'; // KR/JP/TW 통합 앱 — 캐시 네임스페이스 분리(기존 yam-cache-v3와 충돌 없음)
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json'
 ];
+
+// 해외 번들 데이터는 절대 캐시하지 않는다 (lazy-load 취지 — INTEGRATION.md 요구사항)
+const NEVER_CACHE = ['japan_toilets.json', 'taiwan_toilets.json'];
 
 self.addEventListener('install', event => {
   self.skipWaiting(); // 새 SW를 기존 탭 종료 없이 즉시 활성화
@@ -31,17 +34,31 @@ self.addEventListener('fetch', event => {
   // GET 외 요청(POST 등)은 캐시 대상 아님 — cache.put(POST)는 예외 발생
   if (event.request.method !== 'GET') return;
 
+  const url = event.request.url;
+
   // 카카오맵 API 관련 요청은 항상 네트워크 전용
-  if (event.request.url.includes('dapi.kakao.com') || event.request.url.includes('t1.daumcdn.net')) {
+  if (url.includes('dapi.kakao.com') || url.includes('t1.daumcdn.net')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // 구글맵 API 관련 요청도 네트워크 전용 (동적 로더로 로드되는 스크립트·타일)
+  if (url.includes('maps.googleapis.com') || url.includes('maps.gstatic.com')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  // 일본·대만 화장실 데이터는 어떤 캐시에도 넣지 않는다 (네트워크 전용 패스스루)
+  if (NEVER_CACHE.some(name => url.includes(name))) {
     event.respondWith(fetch(event.request));
     return;
   }
 
   const isAppShell =
     event.request.mode === 'navigate' ||
-    event.request.url.endsWith('/index.html') ||
-    event.request.url.endsWith('/manifest.json') ||
-    new URL(event.request.url).pathname === '/';
+    url.endsWith('/index.html') ||
+    url.endsWith('/manifest.json') ||
+    new URL(url).pathname === '/';
 
   if (isAppShell) {
     // 앱 셸(HTML/manifest)은 Network First — 웹에 새로 올리면 앱(TWA)도 바로 반영됨
@@ -65,7 +82,7 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => response || fetch(event.request).then(netRes => {
-        if (netRes && netRes.ok && event.request.url.startsWith(self.location.origin)) {
+        if (netRes && netRes.ok && url.startsWith(self.location.origin)) {
           const cloned = netRes.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, cloned));
         }
