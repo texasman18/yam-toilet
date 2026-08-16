@@ -151,6 +151,9 @@
     .fab-myloc:active{transform:scale(0.92);}
 
     .legend{position:absolute;left:14px;bottom:40px;z-index:100;background:rgba(255,255,255,0.95);padding:10px 14px;border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,0.08),0 2px 2px rgba(0,0,0,0.04);}
+    /* iOS 네이티브 앱에서 하단 AdMob 배너(약 50px)가 표시될 때만 겹치지 않도록 여백 확보 */
+    html.admob-native-active .fabs{bottom:90px;}
+    html.admob-native-active .legend{bottom:90px;}
     .li{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-bottom:4px;color:rgba(0,0,0,0.7);}
     .li:last-child{margin-bottom:0;}
     .ld{width:10px;height:10px;border-radius:50%;}
@@ -1616,11 +1619,38 @@ function doSearch(){
   }
 }
 
+// ── AdMob 배너 (iOS 네이티브 앱 전용, 웹/Android TWA는 무동작) ──
+async function initAdMobBanner(){
+  if(!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) return;
+  // @capgo/capacitor-admob는 네이티브 브리지에 'AdMobPlus'라는 이름으로 등록된다(core.registerPlugin('AdMobPlus', ...)).
+  var AdMob = window.Capacitor.Plugins && window.Capacitor.Plugins.AdMobPlus;
+  if(!AdMob){ console.warn('AdMob: window.Capacitor.Plugins.AdMobPlus 플러그인을 찾을 수 없습니다.'); return; }
+
+  // 배너 표시 여부와 무관하게 레이아웃 여백을 먼저 확보(겹침 방지)
+  document.documentElement.classList.add('admob-native-active');
+
+  try{ await AdMob.start(); }
+  catch(e){ console.warn('AdMob start() 실패:', e); }
+
+  try{ await AdMob.requestTrackingAuthorization(); }
+  catch(e){ console.warn('AdMob requestTrackingAuthorization() 실패(거부 포함) — 비개인화 광고로 계속 진행:', e); }
+
+  try{ await AdMob.adCreate({adUnitId:'ca-app-pub-2548509347528190/3972606386',cls:'BannerAd',id:1,position:'bottom'}); }
+  catch(e){ console.warn('AdMob adCreate() 실패:', e); }
+
+  try{ await AdMob.adLoad({id:1}); }
+  catch(e){ console.warn('AdMob adLoad() 실패:', e); }
+
+  try{ await AdMob.adShow({id:1}); }
+  catch(e){ console.warn('AdMob adShow() 실패:', e); }
+}
+
 // ── DOMContentLoaded ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded',function(){
   document.body.classList.toggle('abroad', curCountry!=='kr');
   updateToggleUI();
   renderLanding();
+  initAdMobBanner();
   document.getElementById('srch-inp').addEventListener('keydown',function(e){if(e.key==='Enter')doSearch();});
   if('serviceWorker' in navigator){
     var swRefreshing = false;
