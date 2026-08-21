@@ -50,7 +50,7 @@
 
     /* ══════════════ 랜딩 (기존 앱 디자인 + 여행 카드) ══════════════ */
     #landing{position:fixed;inset:0;z-index:999;background:#ffffff;
-      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
       overflow-y:auto;padding:calc(var(--safe-top) + 18px) 20px calc(env(safe-area-inset-bottom,0px) + 20px);
       transition:opacity 0.5s;}
     #landing.hide{opacity:0;pointer-events:none;}
@@ -1699,6 +1699,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.body.classList.toggle('abroad', curCountry!=='kr');
   updateToggleUI();
   renderLanding();
+  document.getElementById('landing').scrollTop = 0;
   initAdMobBanner();
   initAndroidTwaBanner();
   document.getElementById('srch-inp').addEventListener('keydown',function(e){if(e.key==='Enter')doSearch();});
