@@ -69,13 +69,17 @@
     .lang-btn.active{background:#ff385c;color:#fff;box-shadow:0 4px 12px rgba(255,56,92,0.3);}
     .start-btn{background:#ff385c;color:#fff;border:none;padding:8px 14px 8px 8px;border-radius:14px;font-size:15.5px;font-weight:700;width:100%;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:12px;box-shadow:0 8px 20px rgba(255,56,92,0.32);transition:transform 0.15s,box-shadow 0.15s;min-height:56px;position:relative;}
     .start-btn:active{transform:scale(0.97);box-shadow:0 4px 10px rgba(255,56,92,0.28);}
-    .start-btn::before{content:'';position:absolute;inset:-4px;border-radius:18px;border:2px solid rgba(255,56,92,0.35);opacity:0;animation:cta-pulse 2.6s ease-out infinite;pointer-events:none;}
-    .start-btn .badge{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;animation:pin-bounce 1.8s ease-in-out infinite;}
+    .start-btn:active::before,.start-btn:active::after{animation-play-state:paused;}
+    .start-btn::before{content:'';position:absolute;inset:-5px;border-radius:19px;border:3px solid rgba(255,56,92,0.65);opacity:0;animation:cta-pulse 1.6s ease-out infinite;pointer-events:none;}
+    .start-btn::after{content:'';position:absolute;inset:-16px;border-radius:28px;background:radial-gradient(circle,rgba(255,56,92,0.5),rgba(255,56,92,0) 70%);opacity:.35;animation:cta-glow 1.6s ease-in-out infinite;pointer-events:none;}
+    .start-btn .badge{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;animation:pin-bounce 1s ease-in-out infinite;}
     .start-btn .txt{flex:1;text-align:left;}
-    .start-btn .arrow{font-size:18px;opacity:0.85;transition:transform 0.15s;}
-    .start-btn:active .arrow{transform:translateX(2px);}
-    @keyframes cta-pulse{0%{opacity:.55;transform:scale(1);}70%{opacity:0;transform:scale(1.06);}100%{opacity:0;transform:scale(1.06);}}
-    @keyframes pin-bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-2px);}}
+    .start-btn .arrow{font-size:18px;opacity:0.85;transition:transform 0.15s;animation:arrow-nudge 1s ease-in-out infinite;}
+    .start-btn:active .arrow{transform:translateX(2px);animation-play-state:paused;}
+    @keyframes cta-pulse{0%{opacity:.8;transform:scale(1);}70%{opacity:0;transform:scale(1.16);}100%{opacity:0;transform:scale(1.16);}}
+    @keyframes cta-glow{0%,100%{opacity:.3;transform:scale(0.9);}50%{opacity:.85;transform:scale(1.12);}}
+    @keyframes pin-bounce{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-4px) rotate(-6deg);}}
+    @keyframes arrow-nudge{0%,100%{transform:translateX(0);}50%{transform:translateX(3px);}}
 
     /* 여행 카드 (기존 랜딩 하단에 추가 — 일본·대만 지도) */
     .land-travel{position:relative;z-index:1;width:100%;max-width:400px;margin:22px auto 0;}
