@@ -67,8 +67,15 @@
     .lang-btns{display:flex;gap:10px;justify-content:center;margin-bottom:18px;}
     .lang-btn{padding:10px 22px;border-radius:9999px;border:none;background:#f7f7f7;color:#222222;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;min-height:40px;}
     .lang-btn.active{background:#ff385c;color:#fff;box-shadow:0 4px 12px rgba(255,56,92,0.3);}
-    .start-btn{background:#ff385c;color:white;border:none;padding:16px 0;border-radius:8px;font-size:16px;font-weight:500;width:100%;box-shadow:0 8px 20px rgba(255,56,92,0.28);cursor:pointer;font-family:inherit;transition:transform 0.2s;min-height:56px;}
-    .start-btn:active{transform:scale(0.96);}
+    .start-btn{background:#ff385c;color:#fff;border:none;padding:8px 14px 8px 8px;border-radius:14px;font-size:15.5px;font-weight:700;width:100%;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:12px;box-shadow:0 8px 20px rgba(255,56,92,0.32);transition:transform 0.15s,box-shadow 0.15s;min-height:56px;position:relative;}
+    .start-btn:active{transform:scale(0.97);box-shadow:0 4px 10px rgba(255,56,92,0.28);}
+    .start-btn::before{content:'';position:absolute;inset:-4px;border-radius:18px;border:2px solid rgba(255,56,92,0.35);opacity:0;animation:cta-pulse 2.6s ease-out infinite;pointer-events:none;}
+    .start-btn .badge{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,0.22);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;animation:pin-bounce 1.8s ease-in-out infinite;}
+    .start-btn .txt{flex:1;text-align:left;}
+    .start-btn .arrow{font-size:18px;opacity:0.85;transition:transform 0.15s;}
+    .start-btn:active .arrow{transform:translateX(2px);}
+    @keyframes cta-pulse{0%{opacity:.55;transform:scale(1);}70%{opacity:0;transform:scale(1.06);}100%{opacity:0;transform:scale(1.06);}}
+    @keyframes pin-bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-2px);}}
 
     /* 여행 카드 (기존 랜딩 하단에 추가 — 일본·대만 지도) */
     .land-travel{position:relative;z-index:1;width:100%;max-width:400px;margin:22px auto 0;}
@@ -116,7 +123,7 @@
     .lt-track.en .lt-thumb{transform:translateX(16px);}
 
     @media (prefers-reduced-motion:reduce){
-      #landing *{transition:none!important;animation:none!important;}
+      #landing *,#landing *::before,#landing *::after{transition:none!important;animation:none!important;}
     }
 
     /* ══════════════ 지도화면 (KR/JP/TW 공통) ══════════════ */
@@ -261,7 +268,7 @@
       <button class="lang-btn active" id="lang-ko" onclick="setLang('ko')">🇰🇷 한국어</button>
       <button class="lang-btn" id="lang-en" onclick="setLang('en')">🇬🇧 English</button>
     </div>
-    <button class="start-btn" id="start-btn" onclick="startApp()">📍 내 주변 화장실 찾기</button>
+    <button class="start-btn" id="start-btn" onclick="startApp()"><span class="badge">📍</span><span class="txt">내 주변 화장실 찾기</span><span class="arrow">›</span></button>
   </div>
 
   <div class="land-travel" id="land-travel">
@@ -961,7 +968,11 @@ var TRIP_SVG={
 function renderLanding(){
   var title=document.getElementById('l-title'), cta=document.getElementById('start-btn');
   if(title) title.innerHTML=T.title;
-  if(cta) cta.textContent=T.startBtn;
+  if(cta){
+    var ctaTxt=cta.querySelector('.txt');
+    if(ctaTxt) ctaTxt.textContent=T.startBtn.replace(/^📍\s*/,'');
+    else cta.textContent=T.startBtn;
+  }
   // 언어 버튼 활성 상태
   var bKo=document.getElementById('lang-ko'), bEn=document.getElementById('lang-en');
   if(bKo) bKo.classList.toggle('active', curLang!=='en');
