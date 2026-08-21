@@ -95,6 +95,16 @@
     .powered{position:relative;z-index:1;font-size:12px;color:#929292;text-align:center;margin-top:14px;}
     .contact{position:relative;z-index:1;font-size:12px;color:#6a6a6a;font-weight:600;text-align:center;margin-top:4px;}
     .contact a{color:inherit;}
+    .contact .sep{margin:0 6px;color:#d5d5d5;}
+
+    /* 서비스 소개 (AdSense 정책상 필요한 실제 콘텐츠 — 랜딩 하단, 스크롤로 접근) */
+    .about-section{position:relative;z-index:1;width:100%;max-width:400px;margin:28px auto 0;text-align:left;}
+    .about-divider{height:1px;background:#ebebeb;margin-bottom:18px;}
+    .about-h2{font-size:15px;font-weight:700;color:#222222;margin:0 0 8px;}
+    .about-h3{font-size:13px;font-weight:700;color:#222222;margin:16px 0 6px;}
+    .about-p{font-size:12.5px;line-height:1.65;color:#6a6a6a;margin:0 0 4px;}
+    .about-p b{color:#222222;}
+    .about-en{font-size:11.5px;line-height:1.65;color:#929292;margin-top:14px;padding-top:14px;border-top:1px dashed #ebebeb;}
 
     /* 언어 토글 스위치 (지도 화면 상단바 — KR 모드 전용) */
     .lang-toggle{display:flex;align-items:center;gap:5px;cursor:pointer;flex-shrink:0;user-select:none;min-height:44px;}
@@ -262,7 +272,26 @@
   </div>
 
   <div class="powered">Powered by 테크셀</div>
-  <div class="contact">문의 : <a href="mailto:texasman@naver.com">texasman@naver.com</a></div>
+  <div class="contact">문의 : <a href="mailto:texasman@naver.com">texasman@naver.com</a><span class="sep">·</span><a href="privacy.html">개인정보처리방침</a></div>
+
+  <div class="about-section">
+    <div class="about-divider"></div>
+    <h2 class="about-h2">얌(YAM)은 어떤 서비스인가요?</h2>
+    <p class="about-p">얌은 대한민국·일본·대만의 공중화장실·개방화장실 위치를 실시간 GPS 기반으로 찾아주는 무료 지도 서비스입니다. 국내 이용자는 물론 한국을 방문한 외국인 관광객, 그리고 일본·대만으로 여행하는 한국인 여행객까지 급하게 화장실이 필요한 순간 언어와 지리를 몰라도 지도 위 아이콘만 눌러 가장 가까운 화장실을 바로 찾을 수 있도록 만들었습니다.</p>
+
+    <h3 class="about-h3">데이터는 어디서 가져오나요?</h3>
+    <p class="about-p">🇰🇷 한국: 행정안전부 공공데이터포털이 제공하는 「전국 공중화장실 위치정보」 78,000여 건을 기반으로 합니다.<br>🇯🇵 일본: OpenStreetMap 기여자들이 구축한 공개 데이터(© OpenStreetMap contributors, ODbL)를 사용합니다.<br>🇹🇼 대만: 環境部 環境管理署의 「全國公廁建檔資料」(정부 공공데이터 개방 라이선스 v1)와 OpenStreetMap 데이터를 병합했습니다. 일부 위치는 Google 지도에 공개된 화장실 정보를 함께 보여줍니다.</p>
+
+    <h3 class="about-h3">이용 방법</h3>
+    <p class="about-p">앱을 열면 자동으로 현재 위치 주변의 화장실이 지도에 표시됩니다. 상단 검색창에 지역명이나 주소를 입력해 다른 지역을 찾아볼 수도 있고, 하단 필터로 공중화장실·개방화장실만 골라 볼 수도 있습니다. 해외 여행 중이라면 지도를 눌러 일본·대만 화면으로 바로 이동할 수 있습니다.</p>
+
+    <h3 class="about-h3">자주 묻는 질문</h3>
+    <p class="about-p"><b>Q. 회원가입이나 로그인이 필요한가요?</b><br>필요 없습니다. 앱을 열면 바로 주변 화장실을 검색할 수 있습니다.</p>
+    <p class="about-p"><b>Q. 위치 정보를 저장하나요?</b><br>현재 위치는 주변 화장실을 검색하는 용도로만 사용되며 서버에 별도로 저장하지 않습니다. 자세한 내용은 개인정보처리방침을 참고해 주세요.</p>
+    <p class="about-p"><b>Q. 데이터가 실제와 다를 수 있나요?</b><br>공공데이터·오픈소스 지도를 기반으로 하다 보니 일부 시설의 운영 여부나 시간이 실제와 다를 수 있습니다. 잘못된 정보를 발견하시면 문의 메일로 알려주세요.</p>
+
+    <p class="about-en">YAM is a free, real-time map that helps you find the nearest public restroom in Korea, Japan, and Taiwan — built for both local residents and international travelers who don&#39;t speak the local language. No sign-up required: open the map, tap a pin, and go.</p>
+  </div>
 </div>
 
 <!-- 지도화면 -->
