@@ -1057,6 +1057,7 @@ function loadCountryData(cb){
 function startApp(){
   document.getElementById('landing').classList.add('hide');
   document.getElementById('mapscreen').classList.add('show');
+  hideAdMobBanner();
   if(curCountry==='kr') loadPublicData(function(){});
   applyUiText();
   updateToggleUI();
@@ -1670,11 +1671,17 @@ function doSearch(){
 }
 
 // ── AdMob 배너 (iOS 네이티브 앱 전용, 웹/Android TWA는 무동작) ──
+// 2026-08-23: AdSense 사이트가 "게시자 콘텐츠가 없는 화면에 광고" 위반을 받아 점검하던 중,
+// 이 배너가 랜딩(콘텐츠 있음)뿐 아니라 #mapscreen(지도 전용, 텍스트 콘텐츠 없음)에도 계속 떠 있던 것을 발견 —
+// AdMob도 같은 AdSense 프로그램 정책("Placed on any non-content-based page" 금지)을 따르므로 동일 위반.
+// startApp()에서 지도 화면 전환 시 hideAdMobBanner()로 내려서 콘텐츠 없는 화면엔 노출되지 않게 한다.
+var admobPlugin = null;
 async function initAdMobBanner(){
   if(!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) return;
   // @capgo/capacitor-admob는 네이티브 브리지에 'AdMobPlus'라는 이름으로 등록된다(core.registerPlugin('AdMobPlus', ...)).
   var AdMob = window.Capacitor.Plugins && window.Capacitor.Plugins.AdMobPlus;
   if(!AdMob){ console.warn('AdMob: window.Capacitor.Plugins.AdMobPlus 플러그인을 찾을 수 없습니다.'); return; }
+  admobPlugin = AdMob;
 
   // 배너 표시 여부와 무관하게 레이아웃 여백을 먼저 확보(겹침 방지)
   document.documentElement.classList.add('admob-native-active');
@@ -1695,18 +1702,24 @@ async function initAdMobBanner(){
   catch(e){ console.warn('AdMob adShow() 실패:', e); }
 }
 
-// ── AdSense 앵커 배너 (Android TWA 전용, iOS/일반 웹은 무동작) ──
-// TWA는 android-app://<packageId> 형태의 document.referrer로 구분된다(표준 감지 방식).
+// 지도 화면(콘텐츠 없음) 진입 시 배너를 내린다 — AdMob도 AdSense 프로그램 정책상
+// 콘텐츠 없는 화면에는 광고를 노출할 수 없다.
+async function hideAdMobBanner(){
+  if(!admobPlugin) return;
+  document.documentElement.classList.remove('admob-native-active');
+  try{ await admobPlugin.adHide({id:1}); }
+  catch(e){ console.warn('AdMob adHide() 실패:', e); }
+}
+
+// ── AdSense 앵커 배너 (Android TWA 전용) — 2026-08-23 정책 위반으로 비활성화 ──
+// AdSense 정책 위반 "게시자 콘텐츠가 없는 화면에 Google 게재 광고"로 사이트가 "주의 필요" 처리됨.
+// 원인: enable_page_level_ads(앵커 광고)는 SPA 전체에 고정 노출되는데, #mapscreen(지도 전용, 텍스트 콘텐츠 없음)
+// 화면에서도 그대로 떠서 "콘텐츠 없는 화면 위 광고" 위반에 해당함(Google이 드는 예시: 손전등 앱과 동일 유형).
+// 콘텐츠(about-section)에만 광고를 붙이려면 수동 광고 유닛(슬롯 ID)이 필요 — AdSense에서 유닛 생성 후 재활성화할 것.
+// TWA는 android-app://<packageId> 형태의 document.referrer로 구분된다(표준 감지 방식) — 함수는 유닛 준비 시 재사용.
 function initAndroidTwaBanner(){
   if(document.referrer.indexOf('android-app://kr.techcel.yam2') !== 0) return;
-  document.documentElement.classList.add('twa-ad-active');
-  try{
-    (window.adsbygoogle = window.adsbygoogle || []).push({
-      google_ad_client: 'ca-pub-2548509347528190',
-      enable_page_level_ads: true,
-      overlays: {bottom: true}
-    });
-  } catch(e){ console.warn('AdSense 앵커 배너 초기화 실패:', e); }
+  // 정책 재검토 통과 전까지 광고 요청 자체를 보내지 않는다(비활성화).
 }
 
 // ── DOMContentLoaded ───────────────────────────────────────
