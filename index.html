@@ -302,6 +302,15 @@
     <p class="about-p"><b>Q. 데이터가 실제와 다를 수 있나요?</b><br>공공데이터·오픈소스 지도를 기반으로 하다 보니 일부 시설의 운영 여부나 시간이 실제와 다를 수 있습니다. 잘못된 정보를 발견하시면 문의 메일로 알려주세요.</p>
 
     <p class="about-en">YAM is a free, real-time map that helps you find the nearest public restroom in Korea, Japan, and Taiwan — built for both local residents and international travelers who don&#39;t speak the local language. No sign-up required: open the map, tap a pin, and go.</p>
+
+    <!-- 랜딩 페이지(콘텐츠 있는 화면) 전용 수동 광고 유닛 — 지도 화면(콘텐츠 없음)에는 노출하지 않는다 -->
+    <ins class="adsbygoogle"
+         style="display:block;margin:24px 0"
+         data-ad-client="ca-pub-2548509347528190"
+         data-ad-slot="6912260763"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
   </div>
 </div>
 
@@ -1711,16 +1720,10 @@ async function hideAdMobBanner(){
   catch(e){ console.warn('AdMob adHide() 실패:', e); }
 }
 
-// ── AdSense 앵커 배너 (Android TWA 전용) — 2026-08-23 정책 위반으로 비활성화 ──
-// AdSense 정책 위반 "게시자 콘텐츠가 없는 화면에 Google 게재 광고"로 사이트가 "주의 필요" 처리됨.
-// 원인: enable_page_level_ads(앵커 광고)는 SPA 전체에 고정 노출되는데, #mapscreen(지도 전용, 텍스트 콘텐츠 없음)
-// 화면에서도 그대로 떠서 "콘텐츠 없는 화면 위 광고" 위반에 해당함(Google이 드는 예시: 손전등 앱과 동일 유형).
-// 콘텐츠(about-section)에만 광고를 붙이려면 수동 광고 유닛(슬롯 ID)이 필요 — AdSense에서 유닛 생성 후 재활성화할 것.
-// TWA는 android-app://<packageId> 형태의 document.referrer로 구분된다(표준 감지 방식) — 함수는 유닛 준비 시 재사용.
-function initAndroidTwaBanner(){
-  if(document.referrer.indexOf('android-app://kr.techcel.yam2') !== 0) return;
-  // 정책 재검토 통과 전까지 광고 요청 자체를 보내지 않는다(비활성화).
-}
+// ── AdSense 앵커 배너(enable_page_level_ads) — 2026-08-23 정책 위반으로 영구 폐기 ──
+// 앵커 광고는 SPA 전체에 고정 노출되어 #mapscreen(지도 전용, 텍스트 콘텐츠 없음)에서도 떴고,
+// "게시자 콘텐츠가 없는 화면에 Google 게재 광고" 위반으로 사이트가 "주의 필요" 처리됐다.
+// 대신 about-section(랜딩 페이지 콘텐츠 영역)에만 붙는 수동 디스플레이 광고 유닛으로 교체함 — 위 <ins data-ad-slot="6912260763">.
 
 // ── DOMContentLoaded ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded',function(){
@@ -1729,7 +1732,6 @@ document.addEventListener('DOMContentLoaded',function(){
   renderLanding();
   document.getElementById('landing').scrollTop = 0;
   initAdMobBanner();
-  initAndroidTwaBanner();
   document.getElementById('srch-inp').addEventListener('keydown',function(e){if(e.key==='Enter')doSearch();});
   if('serviceWorker' in navigator){
     var swRefreshing = false;
