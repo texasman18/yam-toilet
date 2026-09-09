@@ -349,9 +349,9 @@
     <button class="fc" id="fc-pub" onclick="setFilter('public')">🚻 공중화장실</button>
     <button class="fc" id="fc-opn" onclick="setFilter('open')">🏢 개방화장실</button>
   </div>
-  <div id="loc-pill"><div class="bdot"></div><span id="loc-txt">위치 확인 중...</span></div>
-  <div id="count-pill">📍 <span id="cnt">0</span><span id="cnt-label"> 개 발견</span></div>
-  <div id="loading"><div class="spin"></div><span id="loading-txt">화장실 검색 중...</span></div>
+  <div id="loc-pill"><div class="bdot"></div><span id="loc-txt"></span></div>
+  <div id="count-pill">📍 <span id="cnt"></span><span id="cnt-label"></span></div>
+  <div id="loading"><div class="spin"></div><span id="loading-txt"></span></div>
   <div id="mini-loading"><div class="spin-sm"></div></div>
   <div id="bottom-search"></div>
   <div class="fabs">
@@ -1742,6 +1742,13 @@ async function hideAdMobBanner(){
 // 앵커 광고는 SPA 전체에 고정 노출되어 #mapscreen(지도 전용, 텍스트 콘텐츠 없음)에서도 떴고,
 // "게시자 콘텐츠가 없는 화면에 Google 게재 광고" 위반으로 사이트가 "주의 필요" 처리됐다.
 // 대신 about-section(랜딩 페이지 콘텐츠 영역)에만 붙는 수동 디스플레이 광고 유닛으로 교체함 — 위 <ins data-ad-slot="6912260763">.
+//
+// 2026-09-10: 재검토에서도 같은 위반으로 재차 반려됨. curl로 raw HTML(JS 미실행)을 떠 보니
+// #mapscreen의 "위치 확인 중...", "화장실 검색 중...", "0 개 발견" 같은 로딩/빈 상태 문구가
+// 정적 HTML에 그대로 박혀 있어, 같은 문서(광고가 있는 about-section 포함) 안에 정책이 명시한
+// "아직 준비 중인 화면" 텍스트가 함께 잡히는 것으로 추정. #loc-pill/#count-pill/#loading은
+// 기본 display:none이라 실제 화면엔 안 보이지만, DOM/raw HTML 텍스트 추출 기준 크롤러는
+// CSS를 안 보고 텍스트만 읽을 수 있음 — 초기 정적 텍스트를 비워 JS 렌더 시점에만 채우도록 수정.
 
 // ── DOMContentLoaded ───────────────────────────────────────
 document.addEventListener('DOMContentLoaded',function(){
