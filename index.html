@@ -1697,7 +1697,9 @@ function doSearch(){
   }
 }
 
-// ── AdMob 배너 (iOS 네이티브 앱 전용, 웹/Android TWA는 무동작) ──
+// ── AdMob 배너 (iOS·Android 네이티브 앱 전용, 웹은 무동작) ──
+// 2026-09-11: Android를 Bubblewrap TWA에서 Capacitor 네이티브 셸로 전환하며 이 배너를 Android에도 연결.
+// TWA는 네이티브 브리지가 없어 이 함수 자체가 무동작이었음(window.Capacitor 부재).
 // 2026-08-23: AdSense 사이트가 "게시자 콘텐츠가 없는 화면에 광고" 위반을 받아 점검하던 중,
 // 이 배너가 랜딩(콘텐츠 있음)뿐 아니라 #mapscreen(지도 전용, 텍스트 콘텐츠 없음)에도 계속 떠 있던 것을 발견 —
 // AdMob도 같은 AdSense 프로그램 정책("Placed on any non-content-based page" 금지)을 따르므로 동일 위반.
@@ -1710,6 +1712,13 @@ async function initAdMobBanner(){
   if(!AdMob){ console.warn('AdMob: window.Capacitor.Plugins.AdMobPlus 플러그인을 찾을 수 없습니다.'); return; }
   admobPlugin = AdMob;
 
+  // 앱 유닛은 AdMob 콘솔에서 플랫폼별 앱 엔티티가 분리돼 있어 광고 단위 ID도 플랫폼별로 다르다.
+  // iOS 앱(9287823881)의 "iOS 하단 배너" / Android 앱(5558375554)의 "Android 하단 배너".
+  var platform = window.Capacitor.getPlatform ? window.Capacitor.getPlatform() : 'ios';
+  var admobUnitId = platform === 'android'
+    ? 'ca-app-pub-2548509347528190/9932734833'
+    : 'ca-app-pub-2548509347528190/3972606386';
+
   // 배너 표시 여부와 무관하게 레이아웃 여백을 먼저 확보(겹침 방지)
   document.documentElement.classList.add('admob-native-active');
 
@@ -1719,7 +1728,7 @@ async function initAdMobBanner(){
   try{ await AdMob.requestTrackingAuthorization(); }
   catch(e){ console.warn('AdMob requestTrackingAuthorization() 실패(거부 포함) — 비개인화 광고로 계속 진행:', e); }
 
-  try{ await AdMob.adCreate({adUnitId:'ca-app-pub-2548509347528190/3972606386',cls:'BannerAd',id:1,position:'bottom'}); }
+  try{ await AdMob.adCreate({adUnitId:admobUnitId,cls:'BannerAd',id:1,position:'bottom'}); }
   catch(e){ console.warn('AdMob adCreate() 실패:', e); }
 
   try{ await AdMob.adLoad({id:1}); }
