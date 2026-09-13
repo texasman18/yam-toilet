@@ -1,0 +1,21 @@
+{
+  "appId": "kr.techcel.yam2",
+  "appName": "YAM 화장실",
+  "webDir": "www",
+  "server": {
+    "url": "https://yam-toilet.vercel.app",
+    "hostname": "localhost",
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "allowNavigation": [
+      "*.kakao.com",
+      "*.daumcdn.net",
+      "dapi.kakao.com",
+      "t1.daumcdn.net"
+    ]
+  },
+  "ios": {
+    "allowsLinkPreview": false,
+    "scrollEnabled": false
+  }
+}
