@@ -414,7 +414,7 @@
 // ── 다국어 사전 (ko/en = KR 모드, jp/tw = 해외 모드 한국어 UI) ──
 // ═══════════════════════════════════════════════════════════
 // 웹 앱 버전 — 릴리스마다 CHANGELOG.md와 git tag(web-vX.Y.Z)를 함께 올린다
-var APP_VERSION='2.2.1';
+var APP_VERSION='2.2.2';
 
 var LANG={
   ko:{
@@ -788,6 +788,17 @@ function setLoad(v){
   if(isFirstLoad){document.getElementById('loading').classList.toggle('show',v);}
   else{document.getElementById('mini-loading').classList.toggle('show',v);}
   if(!v&&isFirstLoad) isFirstLoad=false;
+}
+// 행안부 공공데이터 전화번호는 숫자로 변환돼 '221482832.0'처럼 앞자리 0·하이픈이 빠져 있음 → 표시용으로 복원
+function fmtTelKR(v){
+  v=String(v||'').trim();
+  if(/[-\s]/.test(v)) return v;                  // 이미 형식이 있는 값은 그대로
+  var s=v.replace(/\.0$/,'');
+  if(!/^\d{7,11}$/.test(s)) return '';            // '0.0' 등 무의미한 값은 숨김
+  if(s.length===8&&/^1[568]/.test(s)) return s.slice(0,4)+'-'+s.slice(4);   // 대표번호 1588-0000
+  if(s.charAt(0)!=='0') s='0'+s;
+  if(s.indexOf('02')===0) return s.length===9?'02-'+s.slice(2,5)+'-'+s.slice(5):s.length===10?'02-'+s.slice(2,6)+'-'+s.slice(6):'';
+  return s.length===10?s.slice(0,3)+'-'+s.slice(3,6)+'-'+s.slice(6):s.length===11?s.slice(0,3)+'-'+s.slice(3,7)+'-'+s.slice(7):'';
 }
 function calcDist(la1,ln1,la2,ln2){
   var R=6371000,dLa=(la2-la1)*Math.PI/180,dLn=(ln2-ln1)*Math.PI/180;
@@ -1409,7 +1420,7 @@ function searchNearKR(lat,lng){
       if(isDupKR(item.la,item.ln))return;
       var t=item.t&&item.t.indexOf('개방')>-1?'open':'public';
       allData.push({
-        p:{place_name:item.n||'공중화장실',road_address_name:item.a||'',address_name:item.a||'',phone:item.p||'',y:item.la,x:item.ln,distance:dist},
+        p:{place_name:item.n||'공중화장실',road_address_name:item.a||'',address_name:item.a||'',phone:fmtTelKR(item.p),y:item.la,x:item.ln,distance:dist},
         t:t,src:'public',h:item.h||''
       });
     });
@@ -1642,8 +1653,8 @@ function openDetail(i){
       (dist?'<div class="dist-card"><div><div style="font-size:11px;color:rgba(0,0,0,0.4);margin-bottom:2px;">'+T.detFrom+'</div><div class="dist-num">'+dist+'m</div></div><div class="dist-right"><div style="font-size:20px;margin-bottom:2px;">🚶</div><div class="dist-walk">'+walkLabel+'</div><div class="dist-min">~'+Math.ceil(dist/60)+T.detWalk+'</div></div></div>':'')+
       '<div class="badges"><span class="badge '+badgeCls+'">'+typeLabel+'</span><span class="badge b-free">'+T.detFree+'</span></div>'+
       '<div class="info-row"><div class="ii">📌</div><div class="il">'+T.detAddr+'</div><div class="iv">'+addr+'</div></div>'+
-      (openHour?'<div class="info-row"><div class="ii">🕐</div><div class="il">Hours</div><div class="iv">'+openHour+'</div></div>':'')+
-      (p.phone&&p.phone!=='nan'?'<div class="info-row"><div class="ii">📞</div><div class="il">'+T.detPhone+'</div><div class="iv">'+esc(p.phone)+'</div></div>':'')+
+      (openHour?'<div class="info-row"><div class="ii">🕐</div><div class="il">'+(curLang==='en'?'Hours':'운영시간')+'</div><div class="iv">'+openHour+'</div></div>':'')+
+      (p.phone&&p.phone!=='nan'?'<div class="info-row"><div class="ii">📞</div><div class="il">'+T.detPhone+'</div><div class="iv"><a href="tel:'+esc(p.phone.replace(/[^\d+]/g,''))+'" style="color:inherit">'+esc(p.phone)+'</a></div></div>':'')+
       '<div class="info-row"><div class="ii">ℹ️</div><div class="il">'+T.detSrc+'</div><div class="iv">'+src+'</div></div>'+
       '<div class="acts">'+
       '<button class="act a-apple" onclick="window.open(\''+appleUrl+'\',\'_blank\')">'+T.detApple+'</button>'+
@@ -1707,7 +1718,7 @@ function openDetail(i){
     '<div class="badges"><span class="badge '+badgeCls+'">'+typeLabel+'</span><span class="badge b-free">'+T.detFree+'</span>'+facBadges+'</div>'+
     '<div class="info-row"><div class="ii">📌</div><div class="il">'+T.detAddr+'</div><div class="iv">'+addr+'</div></div>'+
     (openHour?'<div class="info-row"><div class="ii">🕐</div><div class="il">시간</div><div class="iv">'+openHour+'</div></div>':'')+
-    (p.phone&&p.phone!=='nan'?'<div class="info-row"><div class="ii">📞</div><div class="il">'+T.detPhone+'</div><div class="iv">'+esc(p.phone)+'</div></div>':'')+
+    (p.phone&&p.phone!=='nan'?'<div class="info-row"><div class="ii">📞</div><div class="il">'+T.detPhone+'</div><div class="iv"><a href="tel:'+esc(p.phone.replace(/[^\d+]/g,''))+'" style="color:inherit">'+esc(p.phone)+'</a></div></div>':'')+
     '<div class="info-row"><div class="ii">ℹ️</div><div class="il">'+T.detSrc+'</div><div class="iv">'+src+'</div></div>'+
     '<div class="acts">'+
     '<button class="act a-gmap" onclick="window.open(\''+gmapDirUrl+'\',\'_blank\')">'+T.detGoogleDir+'</button>'+
