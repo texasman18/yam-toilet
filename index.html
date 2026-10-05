@@ -208,9 +208,9 @@
     .cm-goo{border-color:#cba258;color:#8a6f2e;}
     .cm-goo::after{border-top-color:#cba258;}
 
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:600;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;opacity:0;pointer-events:none;transition:opacity 0.3s;}
     .overlay.on{opacity:1;pointer-events:auto;}
-    .sheet{position:fixed;bottom:0;left:0;right:0;z-index:601;background:white;border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.2,0.8,0.2,1);max-height:75vh;display:flex;flex-direction:column;box-shadow:0 -4px 24px rgba(0,0,0,0.1);}
+    .sheet{position:fixed;bottom:0;left:0;right:0;z-index:1001;background:white;border-radius:24px 24px 0 0;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.2,0.8,0.2,1);max-height:75vh;display:flex;flex-direction:column;box-shadow:0 -4px 24px rgba(0,0,0,0.1);}
     .sheet.on{transform:translateY(0);}
     .handle{width:40px;height:4px;background:#ebebeb;border-radius:2px;margin:12px auto;flex-shrink:0;cursor:pointer;}
     .sc{overflow-y:auto;flex:1;padding:0 20px 40px;}
@@ -257,7 +257,7 @@
     .qp{padding:7px 16px;border-radius:50px;border:1px solid #ebebeb;font-size:13px;font-weight:600;background:white;cursor:pointer;font-family:inherit;transition:all 0.2s;}
     .qp:active{background:#ffe8ec;border-color:#ff385c;transform:scale(0.95);}
 
-    #toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(14px);background:#222222;color:white;padding:10px 22px;border-radius:50px;font-size:13px;font-weight:600;opacity:0;transition:all 0.3s;z-index:800;white-space:nowrap;max-width:88vw;overflow:hidden;text-overflow:ellipsis;}
+    #toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(14px);background:#222222;color:white;padding:10px 22px;border-radius:50px;font-size:13px;font-weight:600;opacity:0;transition:all 0.3s;z-index:1100;white-space:nowrap;max-width:88vw;overflow:hidden;text-overflow:ellipsis;}
     #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
     /* 전체 화면: 랜딩·지도 모두 뷰포트 전체를 채운다 (모바일·웹 공통).
@@ -391,6 +391,9 @@
 // ═══════════════════════════════════════════════════════════
 // ── 다국어 사전 (ko/en = KR 모드, jp/tw = 해외 모드 한국어 UI) ──
 // ═══════════════════════════════════════════════════════════
+// 웹 앱 버전 — 릴리스마다 CHANGELOG.md와 git tag(web-vX.Y.Z)를 함께 올린다
+var APP_VERSION='2.1.0';
+
 var LANG={
   ko:{
     title:'급할 때<br><span class="hi">가장 먼저</span><br>찾는 앱',
@@ -1660,7 +1663,8 @@ function openSources(){
     '<div class="info-row"><div class="ii">🇰🇷</div><div class="il">한국</div><div class="iv">행정안전부 공공데이터포털 「전국 공중화장실 위치정보」</div></div>'+
     '<div class="info-row"><div class="ii">🇯🇵</div><div class="il">일본</div><div class="iv">© OpenStreetMap contributors (ODbL)</div></div>'+
     '<div class="info-row"><div class="ii">🇹🇼</div><div class="il">대만</div><div class="iv">環境部 環境管理署 「全國公廁建檔資料」 · 政府資料開放授權條款 v1 + © OpenStreetMap contributors (ODbL)</div></div>'+
-    '<div class="info-row"><div class="ii">🔍</div><div class="il">Google</div><div class="iv">일부 결과는 Google 검색 결과를 포함합니다</div></div>';
+    '<div class="info-row"><div class="ii">🔍</div><div class="il">Google</div><div class="iv">일부 결과는 Google 검색 결과를 포함합니다</div></div>'+
+    '<div class="info-row"><div class="ii">ℹ️</div><div class="il">버전</div><div class="iv">v'+APP_VERSION+'</div></div>';
   document.getElementById('overlay').classList.add('on');
   document.getElementById('sheet').classList.add('on');
 }
