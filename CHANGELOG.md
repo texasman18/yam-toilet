@@ -27,7 +27,8 @@
 ### 네이티브 셸 2.0.1 (스토어 업로드 필요)
 - iOS·Android 앱 아이콘 교체(사인 옐로 + 남녀 픽토그램 핀), 안드로이드 적응형 아이콘 배경 inset 오류 수정
 - 시작 화면(스플래시) 교체: iOS 3장(기존 Capacitor 기본 로고) + Android 26장(기존 빨간 아이콘) → 노랑 배경 + 검정 핀
-- 버전 통일: iOS 2.0.1(25), Android 2.0.1(15)
+- 버전 통일: iOS 2.0.1(26), Android 2.0.1(15)
+- iOS Info.plist에 1.5(25)로 하드코딩돼 있던 버전을 $(MARKETING_VERSION)/$(CURRENT_PROJECT_VERSION) 참조로 수정 — 이제 버전은 project.pbxproj에서만 올린다
 
 ## [web-v2.1.0] - 2026-10-05
 ### 추가
