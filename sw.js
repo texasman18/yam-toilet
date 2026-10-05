@@ -5,8 +5,8 @@ const urlsToCache = [
   '/manifest.json'
 ];
 
-// 해외 번들 데이터는 절대 캐시하지 않는다 (lazy-load 취지 — INTEGRATION.md 요구사항)
-const NEVER_CACHE = ['japan_toilets.json', 'taiwan_toilets.json'];
+// 해외 번들(japan/taiwan_toilets.json)은 일반 정적 리소스처럼 Cache First + 최초 응답 저장 (v2.2 오프라인 목록)
+// 해당 국가에 진입할 때만 요청되므로 한국 사용자는 받지 않는다(lazy-load 유지)
 
 self.addEventListener('install', event => {
   self.skipWaiting(); // 새 SW를 기존 탭 종료 없이 즉시 활성화
@@ -44,12 +44,6 @@ self.addEventListener('fetch', event => {
 
   // 구글맵 API 관련 요청도 네트워크 전용 (동적 로더로 로드되는 스크립트·타일)
   if (url.includes('maps.googleapis.com') || url.includes('maps.gstatic.com')) {
-    event.respondWith(fetch(event.request));
-    return;
-  }
-
-  // 일본·대만 화장실 데이터는 어떤 캐시에도 넣지 않는다 (네트워크 전용 패스스루)
-  if (NEVER_CACHE.some(name => url.includes(name))) {
     event.respondWith(fetch(event.request));
     return;
   }
