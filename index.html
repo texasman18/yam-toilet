@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="얌 YAM">
   <link rel="apple-touch-icon" href="icon.png">
-  <meta name="description" content="급할 때 가장 먼저 찾는 화장실 앱. 한국·일본·대만 78,000여 곳의 화장실을 한국어로 찾아드립니다.">
+  <meta name="description" content="급할 때 가장 먼저 찾는 화장실 앱. 한국·일본·대만 81,000여 곳의 화장실을 한국어로 찾아드립니다.">
   <meta property="og:title" content="얌 - 내 주변 화장실">
   <meta property="og:image" content="icon.png">
   <!-- Google AdSense (Android TWA 하단 배너용, 사이트 소유권 확인 겸용) -->
@@ -306,7 +306,7 @@
     <div class="land-label" id="land-travel-label">✈️ 해외 여행 중이신가요?</div>
     <div class="bento" id="country-cards"></div>
     <div class="land-hint" id="land-hint">지도를 누르면 해당 나라 화장실로 이동해요</div>
-    <button class="land-trust" onclick="openSources()">🚻 78,000+ 화장실 데이터 · 출처 <span style="text-decoration:underline">ⓘ</span></button>
+    <button class="land-trust" onclick="openSources()">🚻 81,000+ 화장실 데이터 · 출처 <span style="text-decoration:underline">ⓘ</span></button>
   </div>
 
   <div class="powered">Powered by 테크셀</div>
@@ -320,7 +320,7 @@
     <div class="about-accordion">
       <div class="acc-item open">
         <button class="acc-head" onclick="toggleAcc(this)"><span>데이터는 어디서 가져오나요?</span><span class="acc-chev">›</span></button>
-        <div class="acc-body"><p class="about-p">🇰🇷 한국: 행정안전부 공공데이터포털이 제공하는 「전국 공중화장실 위치정보」 78,000여 건을 기반으로 합니다.<br>🇯🇵 일본: OpenStreetMap 기여자들이 구축한 공개 데이터(© OpenStreetMap contributors, ODbL)를 사용합니다.<br>🇹🇼 대만: 環境部 環境管理署의 「全國公廁建檔資料」(정부 공공데이터 개방 라이선스 v1)와 OpenStreetMap 데이터를 병합했습니다. 일부 위치는 Google 지도에 공개된 화장실 정보를 함께 보여줍니다.</p></div>
+        <div class="acc-body"><p class="about-p">🇰🇷 한국: 행정안전부 공공데이터포털이 제공하는 「전국 공중화장실 위치정보」 81,000여 건을 기반으로 합니다.<br>🇯🇵 일본: OpenStreetMap 기여자들이 구축한 공개 데이터(© OpenStreetMap contributors, ODbL)를 사용합니다.<br>🇹🇼 대만: 環境部 環境管理署의 「全國公廁建檔資料」(정부 공공데이터 개방 라이선스 v1)와 OpenStreetMap 데이터를 병합했습니다. 일부 위치는 Google 지도에 공개된 화장실 정보를 함께 보여줍니다.</p></div>
       </div>
       <div class="acc-item">
         <button class="acc-head" onclick="toggleAcc(this)"><span>이용 방법</span><span class="acc-chev">›</span></button>
@@ -414,7 +414,7 @@
 // ── 다국어 사전 (ko/en = KR 모드, jp/tw = 해외 모드 한국어 UI) ──
 // ═══════════════════════════════════════════════════════════
 // 웹 앱 버전 — 릴리스마다 CHANGELOG.md와 git tag(web-vX.Y.Z)를 함께 올린다
-var APP_VERSION='2.2.0';
+var APP_VERSION='2.2.1';
 
 var LANG={
   ko:{

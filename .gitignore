@@ -5,3 +5,4 @@ ios-broken-backup/
 android/app/*.keystore
 android/app/*.jks
 *.DS_Store
+resources/store_v2.0.1/
